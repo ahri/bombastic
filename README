@@ -1,0 +1,23 @@
+Bomber will be:
+        dedicated to Jenn
+        a bomberman clone
+        multi platform
+        event based
+        multiplayer (local, network later)
+        flexible as far as clients go
+        a way for me to learn more python
+
+Plan:
+        output a map
+        load a map
+        add a player
+        spawn a player
+        move a player
+        drop a bomb
+        explode a bomb
+        blow up a wall
+        kill a player
+        upgrade player
+
+Libraries:
+        http://github.com/saucelabs/monocle
