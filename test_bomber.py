@@ -4,6 +4,7 @@ Tests for bomber module
 """
 
 from bomber import GameState, Player
+import os
 
 class TestGameState:
     def test_arena(self):
@@ -36,8 +37,8 @@ BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"""
         Load a arena from a file
         """
         state = GameState()
-        arena = open("arenas/test.bmm", 'r')
-        state.load_arena("arenas/test.bmm")
+        arena = open(os.sep.join(["arenas", "test.bmm"]), 'r')
+        state.load_arena(os.sep.join(["arenas", "test.bmm"]))
 
         assert state.arena == arena.read()
         arena.close()
