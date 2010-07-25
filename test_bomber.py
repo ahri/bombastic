@@ -177,7 +177,7 @@ class TestGameState:
         state.player_move(p1, (1, 3))
         assert str(state) # asserting that state is still sane (i.e. player is not overlayed on destructable)
 
-    def test_tick(self):
+    def test_tick_movement(self):
         """
         Tick the game and check player position
         """
