@@ -67,18 +67,20 @@ class GameState(Arena):
     Represents the game state
     """
 
-    SPACE = 0
+    SPACE        = 0
     DESTRUCTABLE = 1
-    BLOCK = 2
-    SPAWN = 4
-    P1 = 8
-    P2 = 16
-    P3 = 32
-    P4 = 64
-    P5 = 128
-    P6 = 256
-    P7 = 512
-    P8 = 1024
+    BLOCK        = 2
+    SPAWN        = 4
+    P1           = 8
+    P2           = 16
+    P3           = 32
+    P4           = 64
+    P5           = 128
+    P6           = 256
+    P7           = 512
+    P8           = 1024
+    BOMB         = 2048
+    FIRE         = 4096
 
     def __init__(self):
         """
@@ -144,6 +146,8 @@ class GameState(Arena):
                     break
 
                 self.tile_set((x, y), self.lookup[char])
+
+        self.players_ingame = []
 
     def __str__(self):
         """

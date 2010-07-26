@@ -74,6 +74,16 @@ class TestGameState:
         assert str(state) == arena.read()
         arena.close()
 
+    def test_arena_reload(self):
+        """
+        """
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        state.arena_load(["arenas", "test.bmm"])
+        assert state.players_ingame == []
+
     def test_player_add(self):
         """
         Add a player to the game
@@ -210,6 +220,27 @@ class TestGameState:
         state.tick()
         assert state.tile_get(*coords_start) == GameState.P1
         assert state.tile_get(*coords_hz) == GameState.SPACE
+
+    def test_tick_bomb(self):
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        p1_coords = p1.coords
+        p1.action_add(Player.BOMB)
+        assert not state.tile_has(p1_coords, GameState.BOMB)
+        state.tick()
+        assert state.tile_has(p1_coords, GameState.BOMB)
+        state.tick()
+        assert state.tile_has(p1_coords, GameState.BOMB)
+        state.tick()
+        assert state.tile_has(p1_coords, GameState.BOMB)
+        state.tick()
+        assert not state.tile_has(p1_coords, GameState.BOMB)
+        assert state.tile_has(p1_coords, GameState.FIRE)
+        state.tick()
+        assert not state.tile_has(p1_coords, GameState.BOMB)
+        assert not state.tile_has(p1_coords, GameState.FIRE)
 
 class TestPlayer:
     """
