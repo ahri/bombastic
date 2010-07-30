@@ -1,72 +1,94 @@
 #!/usr/bin/env python
-"""
-Tests for bomber module
-"""
+"""Tests for bomber module"""
+
+# http://docs.python.org/library/exceptions.html
 
 from py import test
-from bomber import GameState, Player
+from bomber import *
 import os
 
 class TestArena:
-    def test_tile_get(self):
-        state = GameState()
-        state.arena_load(["arenas", "test.bmm"])
-        assert state.tile_get(0, 0) == GameState.BLOCK
-        assert state.tile_get(1, 1) == GameState.SPAWN
-        assert state.tile_get(6, 6) == GameState.BLOCK
+    """Quality control for base data structure"""
 
-        with test.raises(IndexError):
-            state.tile_get(-1, 0)
+    def test_arena_init(self):
+        """Ensure that data structure is set up correctly"""
+        arena = Arena(1, 2)
+        assert arena.data == [[], []]
 
-        with test.raises(IndexError):
-            state.tile_get(0, -1)
+    def test_coords_add(self):
+        """Add object to given coords"""
+        arena = Arena(1, 2)
+        obj = object()
+        assert arena.coords_add((0, 1), obj) == None
+        assert arena.data == [[], [obj]]
 
-        with test.raises(IndexError):
-            state.tile_get(0, 7)
+    def test_coords_get(self):
+        """Get all objects from given coords"""
+        arena = Arena(1, 2)
+        obj = object()
+        arena.data = [[], [obj]]
+        assert arena.coords_get(0, 0) == []
+        assert arena.coords_get(0, 1) == [obj]
 
-        with test.raises(IndexError):
-            state.tile_get(7, 0)
+    def test_coords_remove(self):
+        """Remove the specified object from the given coords"""
+        arena = Arena(1, 2)
+        obj1 = object()
+        obj2 = object()
+        arena.data = [[], [obj1, obj2, obj1]]
 
-        with test.raises(IndexError):
-            state.tile_get(7, 7)
+        assert arena.coords_remove((0, 1), obj1) == obj1
+        assert arena.data == [[], [obj2, obj1]]
 
-    def test_coord_sanity(self):
-        state = GameState()
-        assert state.coord_sanity(0, 0) is None
+        with test.raises(LookupError):
+            arena.coords_remove((0, 0), obj1)
 
-        with test.raises(IndexError):
-            state.coord_sanity(-1, 0)
+    def test_coords_have_obj(self):
+        """Coords contain an specified object"""
+        arena = Arena(1, 2)
+        obj = object()
+        arena.data = [[], [obj]]
+        assert arena.coords_have_obj((0, 1), obj) == True
+        assert arena.coords_have_obj((0, 0), obj) == False
 
-        with test.raises(IndexError):
-            state.coord_sanity(0, -1)
+    def test_coords_have_class(self):
+        """Coords contain an object of a given type"""
+        arena = Arena(1, 2)
+        obj = object()
+        arena.data = [[], [obj]]
+        assert arena.coords_have_class((0, 1), object) == True
+        assert arena.coords_have_class((0, 0), object) == False
 
-        with test.raises(IndexError):
-            state.coord_sanity(-1, -1)
+    def test_rectangle(self):
+        """Ensure that iterating over the Arena gives expected coords"""
+        arena = Arena(3, 4)
+        coords = []
+        for x, y, l in arena:
+            coords.append((x, y))
 
-    def test_tile_has(self):
-        state = GameState()
-        state.arena_load(["arenas", "test.bmm"])
-        assert state.tile_get(0, 0) == GameState.BLOCK
-        assert state.tile_has((0, 0), 0) # all tiles should have 0
+        assert coords == [(0,0), (1,0), (2,0), (0,1), (1,1), (2,1), (0,2), (1,2), (2,2), (0,3), (1,3), (2,3)]
+
+    def test_rect_contents(self):
+        """Ensure that contents all match expected"""
+        arena = Arena(3, 4)
+        data = []
+        for x, y, l in arena:
+            data.append(l)
+
+        assert arena.data == data
 
 class TestGameState:
-    """
-    Tests for Game class
-    """
+    """Tests for Game class"""
 
     def test_arena(self):
-        """
-        Default arena returned
-        """
+        """Default arena returned"""
         state = GameState()
         arena = open(os.sep.join(["arenas", "default.bmm"]), 'r')
         assert str(state) == arena.read()
         arena.close()
 
     def test_arena_load(self):
-        """
-        Load a arena from a file
-        """
+        """Load a arena from a file"""
         state = GameState()
         arena = open(os.sep.join(["arenas", "test.bmm"]), 'r')
         state.arena_load(["arenas", "test.bmm"])
@@ -74,29 +96,15 @@ class TestGameState:
         assert str(state) == arena.read()
         arena.close()
 
-    def test_arena_reload(self):
-        """
-        """
-        state = GameState()
-        p1 = Player()
-        state.player_add(p1)
-        state.spawn()
-        state.arena_load(["arenas", "test.bmm"])
-        assert state.players_ingame == []
-
     def test_player_add(self):
-        """
-        Add a player to the game
-        """
+        """Add a player to the game"""
         state = GameState()
         player = Player()
         state.player_add(player)
         assert player in state.get_players()
 
     def test_player_number(self):
-        """
-        Check player numbers
-        """
+        """Check player numbers"""
         state = GameState()
         p1 = Player()
         state.player_add(p1)
@@ -105,9 +113,7 @@ class TestGameState:
         assert p1.number == 1
 
     def test_player_spawn(self):
-        """
-        Check player numbers and spawn positions
-        """
+        """Check player numbers and spawn positions"""
         state = GameState()
         p1 = Player()
         p2 = Player()
@@ -125,142 +131,95 @@ class TestGameState:
         assert p2.number == 2
         assert p3.number == 3
         assert p4.number == 4
-        assert p5.number == 0
+        assert p5.number == -1
 
-        assert p1.coords == (1, 1)
-        assert p2.coords == (37, 1)
-        assert p3.coords == (1, 17)
-        assert p4.coords == (37, 17)
+        assert state.arena.coords_have_obj((1, 1), p1)
+        assert state.arena.coords_have_obj((37, 1), p2)
+        assert state.arena.coords_have_obj((1, 17), p3)
+        assert state.arena.coords_have_obj((37, 17), p4)
 
-        assert state.tile_get(1, 1)   == GameState.P1
-        assert state.tile_get(37, 1)  == GameState.P2
-        assert state.tile_get(1, 17)  == GameState.P3
-        assert state.tile_get(37, 17) == GameState.P4
-
-    def test_player_current(self):
-        """
-        Player current action
-        """
-        p1 = Player()
-        p1.action_add(Player.DOWN)
-        p1.action_add(Player.UP)
-        assert p1.action_current() == Player.DOWN
-        assert p1.action_current() == Player.UP
-        assert p1.action_current() == Player.UP
-        p1.action_add(Player.LEFT)
-        assert p1.action_current() == Player.LEFT
-
-    def test_tile_add(self):
-        state = GameState()
-        coords = (1, 2)
-        assert state.tile_get(*coords) == GameState.SPACE
-        state.tile_add(coords, GameState.BLOCK)
-        assert state.tile_get(*coords) == GameState.BLOCK
-        assert state.tile_has(coords, GameState.SPACE)
-        assert state.tile_has(coords, GameState.BLOCK)
-
-    def test_tile_remove(self):
-        state = GameState()
-        coords = (1, 1)
-        assert state.tile_get(*coords) == GameState.SPAWN
-        state.tile_remove(coords, GameState.SPAWN)
-        assert state.tile_get(*coords) == GameState.SPACE
-
-    def test_move(self):
-        """
-        Move players
-        """
+    def test_actions_queue_sticky_movement(self):
+        """Queue up actions and ensure that movement is sticky"""
         state = GameState()
         p1 = Player()
         state.player_add(p1)
         state.spawn()
-        assert state.tile_get(1, 1) == GameState.P1
-        assert state.tile_get(1, 2) == GameState.SPACE
-        state.player_move(p1, (1, 2))
-        assert state.tile_get(1, 1) == GameState.SPACE
-        assert state.tile_get(1, 2) == GameState.P1
+        assert state.sticky_actions == {p1: None}
 
-        assert state.tile_get(0, 0) == GameState.BLOCK
-        state.player_move(p1, (0, 0))
-        assert str(state) # asserting that state is still sane (i.e. player is not overlayed on block)
-        assert state.tile_get(1, 3) == GameState.DESTRUCTABLE
-        state.player_move(p1, (1, 3))
-        assert str(state) # asserting that state is still sane (i.e. player is not overlayed on destructable)
+        state.action_add(p1, Player.DOWN)
+        state._actions_process()
+        assert state.sticky_actions == {p1: Player.DOWN}
+        state._actions_process()
+        assert state.sticky_actions == {p1: Player.DOWN}
+
+        state.action_add(p1, Player.UP)
+        state.action_add(p1, Player.LEFT)
+        state._actions_process()
+        assert state.sticky_actions == {p1: Player.UP}
+        state._actions_process()
+        assert state.sticky_actions == {p1: Player.LEFT}
+        state._actions_process()
+        assert state.sticky_actions == {p1: Player.LEFT}
+
+    def test_actions_bomb_non_sticky(self):
+        """Queue a bomb action and ensure that it is not sticky"""
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        assert state.sticky_actions == {p1: None}
+
+        state.action_add(p1, Player.DOWN)
+        state.action_add(p1, Player.BOMB)
+        state._actions_process()
+        assert state.sticky_actions == {p1: Player.DOWN}
+        state._actions_process()
+        assert state.sticky_actions == {p1: None}
 
     def test_tick_movement(self):
-        """
-        Tick the game and check player position
-        """
-        state = GameState()
-        assert state.tick() == None
-        p1 = Player()
-        state.player_add(p1)
-        state.spawn()
-        assert state.tick() == None
-
-        coords_start = (1, 1)
-        coords_vt = (1, 2)
-        coords_hz = (2, 1)
-
-        assert state.tile_get(*coords_start) == GameState.P1
-        assert state.tile_get(*coords_vt) == GameState.SPACE
-        p1.action_add(Player.DOWN)
-        state.tick()
-        assert state.tile_get(*coords_start) == GameState.SPACE
-        assert state.tile_get(*coords_vt) == GameState.P1
-        p1.action_add(Player.UP)
-        state.tick()
-        assert state.tile_get(*coords_start) == GameState.P1
-        assert state.tile_get(*coords_vt) == GameState.SPACE
-        p1.action_add(Player.RIGHT)
-        state.tick()
-        assert state.tile_get(*coords_start) == GameState.SPACE
-        assert state.tile_get(*coords_hz) == GameState.P1
-        p1.action_add(Player.LEFT)
-        state.tick()
-        assert state.tile_get(*coords_start) == GameState.P1
-        assert state.tile_get(*coords_hz) == GameState.SPACE
-
-    def test_tick_bomb(self):
+        """Tick the game and check player position"""
         state = GameState()
         p1 = Player()
         state.player_add(p1)
+        state.arena_load(["arenas", "empty.bmm"])
         state.spawn()
-        p1_coords = p1.coords
-        p1.action_add(Player.BOMB)
-        assert not state.tile_has(p1_coords, GameState.BOMB)
-        state.tick()
-        assert state.tile_has(p1_coords, GameState.BOMB)
-        state.tick()
-        assert state.tile_has(p1_coords, GameState.BOMB)
-        state.tick()
-        assert state.tile_has(p1_coords, GameState.BOMB)
-        state.tick()
-        assert not state.tile_has(p1_coords, GameState.BOMB)
-        assert state.tile_has(p1_coords, GameState.FIRE)
-        state.tick()
-        assert not state.tile_has(p1_coords, GameState.BOMB)
-        assert not state.tile_has(p1_coords, GameState.FIRE)
 
-class TestPlayer:
-    """
-    Tests for Player class
-    """
+        # confirm that arena is suitable for test
+        assert state.arena.coords_have_obj((1, 1), p1)
+        assert state.arena.coords_get(2, 1) == []
+        assert state.arena.coords_get(3, 1) == []
+        assert state.arena.coords_get(1, 2) == []
+        assert state.arena.coords_get(2, 2) == []
+        assert state.arena.coords_get(3, 2) == []
 
-    def test_actions(self):
-        """
-        A series of actions should be entered and pulled out properly
-        """
-        p1 = Player()
-        p1.action_add(Player.DOWN)
-        p1.action_add(Player.LEFT)
-        p1.action_add(Player.BOMB)
-        p1.action_add(Player.RIGHT)
-        p1.action_add(Player.RIGHT)
-        p1.action_add(Player.RIGHT)
-        assert p1.action_next() == Player.DOWN
-        assert p1.action_next() == Player.LEFT
-        assert p1.action_next() == Player.BOMB
-        assert p1.action_next() == Player.RIGHT
-        assert p1.action_next() == Player.RIGHT
-        assert p1.action_next() == Player.RIGHT
+        state.tick() # baseline; no moves
+        assert state.arena.coords_have_obj((1, 1), p1)
+
+        state.action_add(p1, Player.RIGHT)
+
+        state.tick()
+        assert not state.arena.coords_have_obj((1, 1), p1)
+        assert state.arena.coords_have_obj((2, 1), p1)
+
+        state.tick() # sticky
+        assert not state.arena.coords_have_obj((2, 1), p1)
+        assert state.arena.coords_have_obj((3, 1), p1)
+
+        state.action_add(p1, Player.BOMB)
+        state.tick() # bomb should halt them
+        assert state.arena.coords_have_obj((3, 1), p1)
+
+        state.action_add(p1, Player.DOWN)
+        state.action_add(p1, Player.LEFT)
+
+        state.tick()
+        assert not state.arena.coords_have_obj((3, 1), p1)
+        assert state.arena.coords_have_obj((3, 2), p1)
+
+        state.tick()
+        assert not state.arena.coords_have_obj((3, 2), p1)
+        assert state.arena.coords_have_obj((2, 2), p1)
+
+        state.tick() # sticky
+        assert not state.arena.coords_have_obj((2, 2), p1)
+        assert state.arena.coords_have_obj((1, 2), p1)
