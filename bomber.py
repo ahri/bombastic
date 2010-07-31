@@ -141,20 +141,22 @@ class Bomb(GameObject):
         self.state = player.state
         self.coords = player.coords
         self.flame = player.flame
-        self.ticks_left = 3
+        self.ticks_left = 4
 
     def tick(self):
         """What to do when the game ticks; count down and explode"""
         self.ticks_left -= 1
 
-        if self.ticks_left == 0:
-            self.state.arena.coords_remove(self.coords, self)
-            self.state.arena.coords_add(self.coords, Flame(self.coords, self.state))
+        if self.ticks_left > 0:
+            return
 
-            self.incinerate(self.coords, (0, -1), self.flame)
-            self.incinerate(self.coords, (0, +1), self.flame)
-            self.incinerate(self.coords, (-1, 0), self.flame)
-            self.incinerate(self.coords, (+1, 0), self.flame)
+        self.state.arena.coords_remove(self.coords, self)
+        self.state.flame_add(self, self.coords)
+
+        self.incinerate(self.coords, (0, -1), self.flame)
+        self.incinerate(self.coords, (0, +1), self.flame)
+        self.incinerate(self.coords, (-1, 0), self.flame)
+        self.incinerate(self.coords, (+1, 0), self.flame)
 
     def incinerate(self, coords, coord_mod, flame):
         """Recursive function to spread the flames"""

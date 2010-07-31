@@ -283,6 +283,8 @@ class TestGameState:
         assert bomb.coords == p1.coords
         state.arena.coords_add(bomb.coords, bomb)
 
+        assert bomb.ticks_left == 4
+        bomb.tick()
         assert bomb.ticks_left == 3
         bomb.tick()
         assert bomb.ticks_left == 2
@@ -305,6 +307,7 @@ class TestGameState:
         assert not state.arena.coords_have_class((x, y+2), Flame)
 
         state.tick()
+        assert not state.arena.coords_have_class((x, y), Flame)
         assert not state.arena.coords_have_class((x-1, y), Flame)
         assert not state.arena.coords_have_class((x+1, y), Flame)
         assert not state.arena.coords_have_class((x, y-1), Flame)
@@ -325,6 +328,8 @@ class TestGameState:
         assert bomb.coords == p1.coords
         state.arena.coords_add(bomb.coords, bomb)
 
+        assert bomb.ticks_left == 4
+        bomb.tick()
         assert bomb.ticks_left == 3
         bomb.tick()
         assert bomb.ticks_left == 2
@@ -363,6 +368,8 @@ class TestGameState:
         assert bomb.coords == p1.coords
         state.arena.coords_add(bomb.coords, bomb)
 
+        assert bomb.ticks_left == 4
+        bomb.tick()
         assert bomb.ticks_left == 3
         bomb.tick()
         assert bomb.ticks_left == 2
