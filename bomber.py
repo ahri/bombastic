@@ -61,21 +61,27 @@ class Arena(object):
             yield x, y, l
 
 class GameObject(object):
-    pass
+    DEBUG_CHR = ' '
+    ZINDEX = 0
+
+    def __str__(self):
+        return self.DEBUG_CHR
 
 class Block(GameObject):
-    def __str__(self):
-        return 'B'
+    DEBUG_CHR = 'B'
+    ZINDEX = 1
 
 class Destructible(GameObject):
-    def __str__(self):
-        return '.'
+    DEBUG_CHR = '.'
+    ZINDEX = 1
 
 class SpawnPoint(GameObject):
-    def __str__(self):
-        return 'S'
+    DEBUG_CHR = 'S'
+    ZINDEX = 1
 
 class Player(GameObject):
+    DEBUG_CHR = 'P'
+    ZINDEX = 2
     """Represent a player"""
 
     # constants for actions
@@ -90,7 +96,10 @@ class Player(GameObject):
         self.coords = (-1, -1)
 
     def __str__(self):
-        return 'P'
+        if -1 < self.number < 10:
+            return str(self.number)
+        else:
+            return self.DEBUG_CHR
 
 # TODO: Person class with name/score etc. (Player should be created with Person in __init__())
 
@@ -139,10 +148,11 @@ class GameState(object):
                 chars.append('\n')
                 old_y = y
 
-            try:
-                chars.append(str(l[0]))
-            except (IndexError):
-                chars.append(' ')
+            chars.append(str(reduce(
+                lambda a, b: a.ZINDEX > b.ZINDEX and a or b,
+                l,
+                GameObject()
+            )))
 
         chars.append('\n')
 
@@ -236,3 +246,10 @@ class GameState(object):
 
     def _bombs_process(self):
         pass
+
+if __name__ == "bomber":
+    s = GameState()
+    p1 = Player()
+    s.player_add(p1)
+    s.spawn()
+    print(s)
