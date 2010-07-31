@@ -6,6 +6,7 @@ from udeque import udeque
 import os
 
 class Arena(object):
+
     """Represent a 2D arena whose coord spaces are stackable"""
 
     def __init__(self, cols, rows):
@@ -14,23 +15,30 @@ class Arena(object):
         self.rows = rows
         self.data = [[] for i in xrange(rows*cols)]
 
-    def _get_list(self, x, y):
+    def sanity(self, coords):
+        x, y = coords
+        if not (0 <= x < self.cols) or not (0 <= y < self.rows):
+            raise IndexError("Coords (%d, %d) are not valid: must be in range (0, 0) to (%d, %d)" % (x, y, self.cols-1, self.rows-1))
+
+    def _get_list(self, coords):
         """The 2D -> 1D convertermatron"""
+        self.sanity(coords)
+        x, y = coords
         return self.data[x+y*self.cols]
 
     def coords_add(self, coords, obj):
         """Add an object by coords"""
-        self._get_list(*coords).append(obj)
+        self._get_list(coords).append(obj)
 
-    def coords_get(self, x, y):
+    def coords_get(self, coords):
         """Get a list of objects by coords"""
-        return self._get_list(x, y)
+        return self._get_list(coords)
 
     def coords_remove(self, coords, obj):
         """Remove an object by coords"""
-        for i, o in enumerate(self._get_list(*coords)):
+        for i, o in enumerate(self._get_list(coords)):
             if o == obj:
-                del self._get_list(*coords)[i]
+                del self._get_list(coords)[i]
                 return o
 
         raise LookupError("Did not find object")
@@ -39,7 +47,7 @@ class Arena(object):
 
     def coords_have_obj(self, coords, obj):
         """Test for an object by coords"""
-        for o in self._get_list(*coords):
+        for o in self._get_list(coords):
             if o == obj:
                 return True
 
@@ -47,7 +55,7 @@ class Arena(object):
 
     def coords_have_class(self, coords, classref):
         """Test for a class by coords"""
-        for o in self._get_list(*coords):
+        for o in self._get_list(coords):
             if isinstance(o, classref):
                 return True
 
@@ -61,17 +69,30 @@ class Arena(object):
             yield x, y, l
 
 class GameObject(object):
+
+    """
+    Extendable class for items represented in the game arena
+    Mostly populated with debugging helpers
+    """
+
     DEBUG_CHR = ' '
     ZINDEX = 0
 
     def __str__(self):
+        """Output debug information"""
         return self.DEBUG_CHR
 
 class Block(GameObject):
+
+    """The indestructible block"""
+
     DEBUG_CHR = 'B'
     ZINDEX = 1
 
-class Destructible(GameObject):
+class DestructibleBlock(GameObject):
+
+    """The indestructible block"""
+
     DEBUG_CHR = '.'
     ZINDEX = 1
 
@@ -80,9 +101,11 @@ class SpawnPoint(GameObject):
     ZINDEX = 1
 
 class Player(GameObject):
-    DEBUG_CHR = 'P'
-    ZINDEX = 2
+
     """Represent a player"""
+
+    DEBUG_CHR = 'P'
+    ZINDEX = 3
 
     # constants for actions
     UP    = 1
@@ -92,31 +115,105 @@ class Player(GameObject):
     BOMB  = 5
 
     def __init__(self):
+        """Set up some defaults"""
         self.number = -1
         self.coords = (-1, -1)
+        self.flame = 1
+        self.state = None
 
     def __str__(self):
+        """Output debug information"""
+        return self.DEBUG_CHR
         if -1 < self.number < 10:
             return str(self.number)
         else:
             return self.DEBUG_CHR
 
-# TODO: Person class with name/score etc. (Player should be created with Person in __init__())
+class Bomb(GameObject):
+
+    """Boom!"""
+
+    DEBUG_CHR = 'x'
+    ZINDEX = 2
+
+    def __init__(self, player):
+        """Set up some defaults and references"""
+        self.player = player
+        self.state = player.state
+        self.coords = player.coords
+        self.flame = player.flame
+        self.ticks_left = 3
+
+    def tick(self):
+        """What to do when the game ticks; count down and explode"""
+        self.ticks_left -= 1
+
+        if self.ticks_left == 0:
+            self.state.arena.coords_remove(self.coords, self)
+            self.state.arena.coords_add(self.coords, Flame(self.coords, self.state))
+
+            self.incinerate(self.coords, (0, -1), self.flame)
+            self.incinerate(self.coords, (0, +1), self.flame)
+            self.incinerate(self.coords, (-1, 0), self.flame)
+            self.incinerate(self.coords, (+1, 0), self.flame)
+
+    def incinerate(self, coords, coord_mod, flame):
+        """Recursive function to spread the flames"""
+        coords = coords[0] + coord_mod[0], coords[1] + coord_mod[1]
+        try:
+            self.state.arena.sanity(coords)
+        except (IndexError):
+            return
+
+        if self.state.arena.coords_have_class(coords, Block):
+            return
+
+        self.state.flame_add(self, coords)
+        if self.state.arena.coords_have_class(coords, DestructibleBlock):
+            return
+
+        if flame == 1:
+            return
+
+        self.incinerate(coords,
+                        coord_mod,
+                        flame-1)
+
+
+class Flame(GameObject):
+
+    """Crackle"""
+
+    DEBUG_CHR = "~"
+    ZINDEX = 4
+
+    def __init__(self, bomb, coords):
+        """Set up some defaults and references"""
+        self.bomb = bomb
+        self.coords = coords
+
+    def tick(self):
+        """What to do when the game ticks; remove self"""
+        self.bomb.state.arena.coords_remove(self.coords, self)
 
 class GameState(object):
+
     """Represents the game state"""
 
     def __init__(self):
         "Simple init of variables"
-        self.player_queue = udeque()
-        self.sticky_actions = {}
-        self.action_queue = deque()
+        self._player_queue = udeque()
+        self._sticky_actions = {}
+        self._action_queue = deque()
 
-        self.lookup = {
+        self._lookup = {
             'B': Block,
-            '.': Destructible,
+            '.': DestructibleBlock,
             'S': SpawnPoint,
         }
+
+        self._bombs = []
+        self._flames = []
 
         self.arena_load(["arenas", "default.bmm"])
 
@@ -137,7 +234,7 @@ class GameState(object):
                 if char == ' ':
                     continue
 
-                self.arena.coords_add((col, row), self.lookup[char]())
+                self.arena.coords_add((col, row), self._lookup[char]())
 
     def __str__(self):
         """Produce a string representation of the arena in the same format as the map files"""
@@ -160,11 +257,7 @@ class GameState(object):
 
     def player_add(self, player):
         """Add a player to the game state"""
-        self.player_queue.appendleft(player)
-
-    def get_players(self):
-        """Get currently loaded players"""
-        return self.player_queue
+        self._player_queue.appendleft(player)
 
     def spawn(self):
         """Spawn the players into the arena"""
@@ -172,25 +265,28 @@ class GameState(object):
         for x, y, l in self.arena:
             if self.arena.coords_have_class((x, y), SpawnPoint):
                 try:
-                    player = self.player_queue.pop()
+                    player = self._player_queue.pop()
                 except (IndexError):
                     break
 
                 p_no += 1
                 self.arena.coords_add((x, y), player)
                 player.number = p_no
+                player.state = self
                 player.coords = (x, y)
-                self.sticky_actions[player] = None
+                self._sticky_actions[player] = None
 
     def tick(self):
         """Step to the next game state"""
+        self._flames_process()
         self._actions_process()
         self._bombs_process()
 
     def _player_move(self, player, new_coords):
         """Move a player"""
-        if self.arena.coords_have_class(new_coords, Block) or self.arena.coords_have_class(new_coords, Destructible):
-            return False
+        for o in self.arena.coords_get(new_coords):
+            if isinstance(o, (Block, DestructibleBlock, Bomb)):
+                return False
 
         self.arena.coords_remove(player.coords, player)
         self.arena.coords_add(new_coords, player)
@@ -200,13 +296,15 @@ class GameState(object):
         return True
 
     def action_add(self, player, action):
-        self.action_queue.appendleft((player, action))
+        """Add player actions to a queue for processing"""
+        self._action_queue.appendleft((player, action))
 
     def _actions_process(self):
+        """Process queued actions or fall back to sticky actions"""
         unexecuted = deque()
         had_turn = []
-        while self.action_queue:
-            player, action = self.action_queue.pop()
+        while self._action_queue:
+            player, action = self._action_queue.pop()
             if player in had_turn:
                 unexecuted.appendleft((player, action))
             else:
@@ -214,18 +312,19 @@ class GameState(object):
                 self._player_sticky(player, action)
                 had_turn.append(player)
 
-        for player in self.sticky_actions:
+        for player in self._sticky_actions:
             if player not in had_turn:
-                self._player_action(player, self.sticky_actions[player])
+                self._player_action(player, self._sticky_actions[player])
 
-        self.action_queue = unexecuted
+        self._action_queue = unexecuted
 
     def _player_action(self, player, action):
+        """Perform player action"""
         px, py = player.coords
         nx, ny = -1, -1
 
         if action == Player.BOMB:
-            pass
+            self.bomb_add(player)
         elif action == Player.UP:
             nx, ny = px, py-1
         elif action == Player.DOWN:
@@ -239,13 +338,39 @@ class GameState(object):
             self._player_move(player, (nx, ny))
 
     def _player_sticky(self, player, action):
+        """Add actions to "sticky" lookup, if applicable"""
         if action == Player.BOMB:
-            self.sticky_actions[player] = None
+            self._sticky_actions[player] = None
         else:
-            self.sticky_actions[player] = action
+            self._sticky_actions[player] = action
+
+    def bomb_add(self, player):
+        """Add and track a bomb"""
+        bomb = Bomb(player)
+        self._bombs.append(bomb)
+        self.arena.coords_add(bomb.coords, bomb)
 
     def _bombs_process(self):
-        pass
+        """Tick bombs and forget about them when their timers run out"""
+        for i, b in enumerate(self._bombs):
+            if b.ticks_left == 0:
+                del self._bombs[i]
+                continue
+
+            b.tick()
+
+    def flame_add(self, bomb, coords):
+        """Add and track some flame"""
+        flame = Flame(bomb, coords)
+        self._flames.append(flame)
+        self.arena.coords_add(coords, flame)
+
+    def _flames_process(self):
+        """Tick the flames and forget about them"""
+        for i, f in enumerate(self._flames):
+            f.tick()
+
+        self._flames = []
 
 if __name__ == "bomber":
     s = GameState()
@@ -253,3 +378,27 @@ if __name__ == "bomber":
     s.player_add(p1)
     s.spawn()
     print(s)
+
+    def up():
+        s.action_add(p1, Player.UP)
+        tick()
+
+    def down():
+        s.action_add(p1, Player.DOWN)
+        tick()
+
+    def left():
+        s.action_add(p1, Player.LEFT)
+        tick()
+
+    def right():
+        s.action_add(p1, Player.RIGHT)
+        tick()
+
+    def bomb():
+        s.action_add(p1, Player.BOMB)
+        tick()
+
+    def tick():
+        s.tick()
+        print(s)
