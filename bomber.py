@@ -123,7 +123,6 @@ class Player(GameObject):
 
     def __str__(self):
         """Output debug information"""
-        return self.DEBUG_CHR
         if -1 < self.number < 10:
             return str(self.number)
         else:
