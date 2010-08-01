@@ -113,6 +113,9 @@ class SpawnPoint(GameObject):
     def flamed(self, flame):
         pass
 
+    def picked_up(self, player):
+        pass
+
 class Player(GameObject):
 
     """Represent a player"""
@@ -149,6 +152,27 @@ class Player(GameObject):
     def flamed(self, flame):
         pass
 
+    def move(self, new_coords):
+        """Move a player"""
+        objs = []
+        for o in self.state.arena.coords_get(new_coords):
+            if isinstance(o, (Block, DestructibleBlock, Bomb)):
+                return False
+
+            objs.append(o)
+
+        self.state.arena.coords_remove(self.coords, self)
+        self.state.arena.coords_add(new_coords, self)
+        for o in objs:
+            o.picked_up(self)
+
+        self.coords = new_coords
+
+        return True
+
+    def picked_up(self, player):
+        pass
+
 class Bomb(GameObject):
 
     """Boom!"""
@@ -170,6 +194,10 @@ class Bomb(GameObject):
         if self.ticks_left > 0:
             return
 
+        self.explode()
+
+    def explode(self):
+        self.state.arena.coords_remove(self.coords, self)
         self.state.flame_add(self, self.coords)
         self.incinerate(self.coords, (0, -1), self.flame)
         self.incinerate(self.coords, (0, +1), self.flame)
@@ -199,8 +227,8 @@ class Bomb(GameObject):
                         flame-1)
 
     def flamed(self, flame):
-        """What to do when I get flamed; remove self"""
-        self.state.arena.coords_remove(self.coords, self)
+        """What to do when I get flamed; explode"""
+        pass
 
 
 class Flame(GameObject):
@@ -218,10 +246,7 @@ class Flame(GameObject):
         objs = []
         for o in self.state.arena.coords_get(coords):
             if o != self:
-                objs.append(o)
-
-        for o in objs:
-            o.flamed(self)
+                o.flamed(self)
 
     def tick(self):
         """What to do when the game ticks; remove self"""
@@ -310,19 +335,6 @@ class GameState(object):
         self._actions_process()
         self._bombs_process()
 
-    def _player_move(self, player, new_coords):
-        """Move a player"""
-        for o in self.arena.coords_get(new_coords):
-            if isinstance(o, (Block, DestructibleBlock, Bomb)):
-                return False
-
-        self.arena.coords_remove(player.coords, player)
-        self.arena.coords_add(new_coords, player)
-
-        player.coords = new_coords
-
-        return True
-
     def action_add(self, player, action):
         """Add player actions to a queue for processing"""
         self._action_queue.appendleft((player, action))
@@ -363,7 +375,7 @@ class GameState(object):
             nx, ny = px+1, py
 
         if (nx, ny) != (-1, -1):
-            self._player_move(player, (nx, ny))
+            player.move((nx, ny))
 
     def _player_sticky(self, player, action):
         """Add actions to "sticky" lookup, if applicable"""

@@ -252,19 +252,19 @@ class TestGameState:
         assert state.arena.coords_have_obj((1, 1), p1)
 
         assert state.arena.coords_have_class((0, 0), Block)
-        assert not state._player_move(p1, (0, 0))
+        assert not p1.move((0, 0))
         assert not state.arena.coords_have_obj((0, 0), p1)
         assert state.arena.coords_have_obj((1, 1), p1)
 
         assert state.arena.coords_have_class((1, 3), DestructibleBlock)
-        assert not state._player_move(p1, (1, 3))
+        assert not p1.move((1, 3))
         assert not state.arena.coords_have_obj((1, 3), p1)
         assert state.arena.coords_have_obj((1, 1), p1)
 
         assert state.arena.coords_get((2, 1)) == []
         state.arena.coords_add((2, 1), Bomb(p1))
         assert state.arena.coords_have_class((2, 1), Bomb)
-        assert not state._player_move(p1, (2, 1))
+        assert not p1.move((2, 1))
         assert not state.arena.coords_have_obj((2, 1), p1)
         assert state.arena.coords_have_obj((1, 1), p1)
 
@@ -281,7 +281,6 @@ class TestGameState:
 
         assert bomb.flame == p1.flame
         assert bomb.coords == p1.coords
-        state.arena.coords_add(bomb.coords, bomb)
 
         assert bomb.ticks_left == 4
         bomb.tick()
@@ -293,7 +292,7 @@ class TestGameState:
         assert state.arena.coords_have_obj(bomb.coords, bomb)
         bomb.tick()
         assert bomb.ticks_left == 0
-        assert not state.arena.coords_have_obj(bomb.coords, bomb) ### arg.... why?>!??!
+        assert not state.arena.coords_have_obj(bomb.coords, bomb)
 
         x, y = bomb.coords
         assert state.arena.coords_have_class(bomb.coords, Flame)
@@ -326,7 +325,6 @@ class TestGameState:
 
         assert bomb.flame == p1.flame
         assert bomb.coords == p1.coords
-        state.arena.coords_add(bomb.coords, bomb)
 
         assert bomb.ticks_left == 4
         bomb.tick()
@@ -366,7 +364,6 @@ class TestGameState:
 
         assert bomb.flame == p1.flame
         assert bomb.coords == p1.coords
-        state.arena.coords_add(bomb.coords, bomb)
 
         assert bomb.ticks_left == 4
         bomb.tick()
@@ -407,3 +404,36 @@ class TestGameState:
         assert state.arena.coords_have_class((1, 2), Flame)
         assert state.arena.coords_have_class((1, 3), Flame)
         assert not state.arena.coords_have_class((1, 3), DestructibleBlock)
+
+    def test_player_death(self):
+        """Kill a player"""
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        state.tick()
+        state.tick()
+        assert not state.arena.coords_have_obj(p1.coords, p1)
+
+    def test_powerup_generation(self):
+        """Powerups should be generated 30% of the time, with an equal chance of bomb/flame generated"""
+
+    def test_powerup_pickup(self):
+        """Players should pick up a powerup when they move to a square with a powerup on it"""
+
+    def test_powerup_pickup_race(self):
+        """First player to a powerup gets it"""
+
+    def test_chain_explosion(self):
+        """Bombs should blow other bombs up"""
+
+    def test_player_deaths_counter(self):
+        """Count how many deaths"""
+
+    def test_player_kills_counter(self):
+        """Count how many kills a player has"""
+
+    def test_player_suicides_counter(self):
+        """Suicides count as +1 death and +1 suicide, but not a kill"""
