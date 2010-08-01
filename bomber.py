@@ -78,6 +78,12 @@ class GameObject(object):
     DEBUG_CHR = ' '
     ZINDEX = 0
 
+    def __init__(self, **kwargs):
+        self.state = kwargs["state"]
+        self.coords = kwargs["coords"]
+        if self.state:
+            self.state.arena.coords_add(self.coords, self)
+
     def __str__(self):
         """Output debug information"""
         return self.DEBUG_CHR
@@ -96,9 +102,16 @@ class DestructibleBlock(GameObject):
     DEBUG_CHR = '.'
     ZINDEX = 1
 
+    def flamed(self, flame):
+        """What to do when I get flamed; remove self"""
+        self.state.arena.coords_remove(self.coords, self)
+
 class SpawnPoint(GameObject):
     DEBUG_CHR = 'S'
     ZINDEX = 1
+
+    def flamed(self, flame):
+        pass
 
 class Player(GameObject):
 
@@ -116,10 +129,15 @@ class Player(GameObject):
 
     def __init__(self):
         """Set up some defaults"""
-        self.number = -1
-        self.coords = (-1, -1)
-        self.flame = 1
         self.state = None
+        self.coords = (-1, -1)
+
+        self.number = -1
+        self.flame = 1
+
+    def spawn(self, number, **kwargs):
+        self.number = number
+        super(Player, self).__init__(state=kwargs["state"], coords=kwargs["coords"])
 
     def __str__(self):
         """Output debug information"""
@@ -127,6 +145,9 @@ class Player(GameObject):
             return str(self.number)
         else:
             return self.DEBUG_CHR
+
+    def flamed(self, flame):
+        pass
 
 class Bomb(GameObject):
 
@@ -138,10 +159,9 @@ class Bomb(GameObject):
     def __init__(self, player):
         """Set up some defaults and references"""
         self.player = player
-        self.state = player.state
-        self.coords = player.coords
         self.flame = player.flame
         self.ticks_left = 4
+        super(Bomb, self).__init__(state=player.state, coords=player.coords)
 
     def tick(self):
         """What to do when the game ticks; count down and explode"""
@@ -150,9 +170,7 @@ class Bomb(GameObject):
         if self.ticks_left > 0:
             return
 
-        self.state.arena.coords_remove(self.coords, self)
         self.state.flame_add(self, self.coords)
-
         self.incinerate(self.coords, (0, -1), self.flame)
         self.incinerate(self.coords, (0, +1), self.flame)
         self.incinerate(self.coords, (-1, 0), self.flame)
@@ -180,6 +198,10 @@ class Bomb(GameObject):
                         coord_mod,
                         flame-1)
 
+    def flamed(self, flame):
+        """What to do when I get flamed; remove self"""
+        self.state.arena.coords_remove(self.coords, self)
+
 
 class Flame(GameObject):
 
@@ -191,7 +213,15 @@ class Flame(GameObject):
     def __init__(self, bomb, coords):
         """Set up some defaults and references"""
         self.bomb = bomb
-        self.coords = coords
+        super(Flame, self).__init__(state=bomb.state, coords=coords)
+
+        objs = []
+        for o in self.state.arena.coords_get(coords):
+            if o != self:
+                objs.append(o)
+
+        for o in objs:
+            o.flamed(self)
 
     def tick(self):
         """What to do when the game ticks; remove self"""
@@ -235,7 +265,7 @@ class GameState(object):
                 if char == ' ':
                     continue
 
-                self.arena.coords_add((col, row), self._lookup[char]())
+                self._lookup[char](state=self, coords=(col, row))
 
     def __str__(self):
         """Produce a string representation of the arena in the same format as the map files"""
@@ -249,7 +279,7 @@ class GameState(object):
             chars.append(str(reduce(
                 lambda a, b: a.ZINDEX > b.ZINDEX and a or b,
                 l,
-                GameObject()
+                GameObject(state=None, coords=None)
             )))
 
         chars.append('\n')
@@ -271,10 +301,7 @@ class GameState(object):
                     break
 
                 p_no += 1
-                self.arena.coords_add((x, y), player)
-                player.number = p_no
-                player.state = self
-                player.coords = (x, y)
+                player.spawn(p_no, state=self, coords=(x, y))
                 self._sticky_actions[player] = None
 
     def tick(self):
@@ -347,9 +374,7 @@ class GameState(object):
 
     def bomb_add(self, player):
         """Add and track a bomb"""
-        bomb = Bomb(player)
-        self._bombs.append(bomb)
-        self.arena.coords_add(bomb.coords, bomb)
+        self._bombs.append(Bomb(player))
 
     def _bombs_process(self):
         """Tick bombs and forget about them when their timers run out"""
@@ -362,9 +387,7 @@ class GameState(object):
 
     def flame_add(self, bomb, coords):
         """Add and track some flame"""
-        flame = Flame(bomb, coords)
-        self._flames.append(flame)
-        self.arena.coords_add(coords, flame)
+        self._flames.append(Flame(bomb, coords))
 
     def _flames_process(self):
         """Tick the flames and forget about them"""

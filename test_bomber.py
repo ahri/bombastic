@@ -293,7 +293,7 @@ class TestGameState:
         assert state.arena.coords_have_obj(bomb.coords, bomb)
         bomb.tick()
         assert bomb.ticks_left == 0
-        assert not state.arena.coords_have_obj(bomb.coords, bomb)
+        assert not state.arena.coords_have_obj(bomb.coords, bomb) ### arg.... why?>!??!
 
         x, y = bomb.coords
         assert state.arena.coords_have_class(bomb.coords, Flame)
@@ -386,3 +386,24 @@ class TestGameState:
         assert state.arena.coords_have_class((x+1, y), Flame)
         assert not state.arena.coords_have_class((x, y-1), Flame)
         assert state.arena.coords_have_class((x, y+1), Flame)
+
+    def test_blow_up_destructible(self):
+        """Make sure that destructible blocks are flamed out of existence"""
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        assert state.arena.coords_have_obj((1, 1), p1)
+        state.action_add(p1, Player.DOWN)
+        state.tick()
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        state.action_add(p1, Player.UP)
+        state.tick()
+        state.action_add(p1, Player.RIGHT)
+        state.tick()
+        assert state.arena.coords_have_class((1, 2), Bomb)
+        state.tick()
+        assert state.arena.coords_have_class((1, 2), Flame)
+        assert state.arena.coords_have_class((1, 3), Flame)
+        assert not state.arena.coords_have_class((1, 3), DestructibleBlock)
