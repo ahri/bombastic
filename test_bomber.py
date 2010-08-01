@@ -6,6 +6,7 @@
 from py import test
 from bomber import *
 import os
+import random
 
 class TestArena:
 
@@ -415,25 +416,191 @@ class TestGameState:
         state.tick()
         state.tick()
         state.tick()
+        state.tick()
         assert not state.arena.coords_have_obj(p1.coords, p1)
+
+    def test_player_bombs_max(self):
+        """Make sure that player can only drop the number of bombs they have powerups for"""
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        assert p1.bomb == 1
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        assert state.arena.coords_have_class(p1.coords, Bomb)
+        state.action_add(p1, Player.DOWN)
+        state.tick()
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        assert not state.arena.coords_have_class(p1.coords, Bomb)
 
     def test_powerup_generation(self):
         """Powerups should be generated 30% of the time, with an equal chance of bomb/flame generated"""
+        ratio = 0.3
+        error_margin = 0.1
+
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        bomb = Bomb(p1)
+        flame = Flame(bomb, (1, 2))
+        for x in xrange(3, 36):
+            for o in state.arena.coords_get((x, 1)):
+                if isinstance(o, DestructibleBlock):
+                    o.flamed(flame)
+
+        count = 0.0
+        flames = 0
+        bombs = 0
+        for x in xrange(3, 36):
+            count += 1
+            for o in state.arena.coords_get((x, 1)):
+                if isinstance(o, PowerupFlame):
+                    flames += 1
+                if isinstance(o, PowerupBomb):
+                    bombs += 1
+
+#        assert (ratio - error_margin)     < ((flames+bombs)/count) < (ratio + error_margin)
+#        assert ((ratio - error_margin)/2) < (flames/count)         < ((ratio + error_margin)/2)
+#        assert ((ratio - error_margin)/2) < (bombs/count)          < ((ratio + error_margin)/2)
+        assert (flames + bombs) > 0
 
     def test_powerup_pickup(self):
         """Players should pick up a powerup when they move to a square with a powerup on it"""
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        assert p1.flame == 1
+        assert p1.bomb == 1
+        flame = PowerupFlame(state=state, coords=(2, 1))
+        bomb = PowerupBomb(state=state, coords=(1, 2))
+        state.action_add(p1, Player.RIGHT)
+        state.tick()
+        assert not state.arena.coords_have_obj(flame.coords, flame)
+        assert p1.flame == 2
+        state.action_add(p1, Player.LEFT)
+        state.tick()
+        state.action_add(p1, Player.DOWN)
+        state.tick()
+        assert not state.arena.coords_have_obj(bomb.coords, bomb)
+        assert p1.bomb == 2
 
     def test_powerup_pickup_race(self):
         """First player to a powerup gets it"""
+        state = GameState()
+        p1 = Player()
+        p2 = Player()
+        p1.spawn(1, state=state, coords=(1, 1))
+        p2.spawn(2, state=state, coords=(1, 1))
+        assert p1.flame == 1
+        assert p2.flame == 1
+        PowerupFlame(state=state, coords=(1, 2))
+        state.action_add(p1, Player.DOWN)
+        state.action_add(p2, Player.DOWN)
+        state.tick()
+        assert p1.flame == 2
+        assert p2.flame == 1
+
+        # retry!
+
+        state = GameState()
+        p1 = Player()
+        p2 = Player()
+        p1.spawn(1, state=state, coords=(1, 1))
+        p2.spawn(2, state=state, coords=(1, 1))
+        assert p1.flame == 1
+        assert p2.flame == 1
+        PowerupFlame(state=state, coords=(1, 2))
+        state.action_add(p2, Player.DOWN)
+        state.action_add(p1, Player.DOWN)
+        state.tick()
+        assert p1.flame == 1
+        assert p2.flame == 2
+
+        # with stickiness
+
+        state = GameState()
+        p1 = Player()
+        p2 = Player()
+        p1.spawn(1, state=state, coords=(1, 1))
+        p2.spawn(2, state=state, coords=(1, 1))
+        assert p1.flame == 1
+        assert p2.flame == 1
+        for o in state.arena.coords_get((1, 3)):
+            state.arena.coords_remove((1, 3), o)
+        PowerupFlame(state=state, coords=(1, 3))
+        state.action_add(p1, Player.DOWN)
+        state.action_add(p2, Player.DOWN)
+        state.tick()
+        state.action_add(p2, Player.DOWN)
+        state.tick()
+        assert p1.flame == 1
+        assert p2.flame == 2
 
     def test_chain_explosion(self):
         """Bombs should blow other bombs up"""
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        state.action_add(p1, Player.RIGHT)
+        state.tick()
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        state.action_add(p1, Player.LEFT)
+        state.tick()
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        state.tick()
+        assert not state.arena.coords_have_class((1, 1), Bomb)
 
-    def test_player_deaths_counter(self):
-        """Count how many deaths"""
-
-    def test_player_kills_counter(self):
-        """Count how many kills a player has"""
+    def test_player_kills_deaths_counter(self):
+        """Count how many kills/deaths have occurred"""
+        state = GameState()
+        p1 = Player()
+        p2 = Player()
+        state.player_add(p1)
+        state.player_add(p2)
+        state.spawn()
+        assert p1.kills == 0
+        assert p1.deaths == 0
+        assert p2.kills == 0
+        assert p2.deaths == 0
+        p2.drop_bomb()
+        for bomb in state.arena.coords_get(p2.coords):
+            if isinstance(bomb, Bomb):
+                break
+        else:
+            assert False
+        state.arena.coords_remove(p2.coords, bomb)
+        state.arena.coords_add(p1.coords, bomb)
+        bomb.coords = p1.coords
+        state.tick()
+        state.tick()
+        state.tick()
+        state.tick()
+        assert p1.kills == 0
+        assert p1.deaths == 1
+        assert p2.kills == 1
+        assert p2.deaths == 0
 
     def test_player_suicides_counter(self):
         """Suicides count as +1 death and +1 suicide, but not a kill"""
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        assert p1.kills == 0
+        assert p1.deaths == 0
+        assert p1.suicides == 0
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        state.tick()
+        state.tick()
+        state.tick()
+        assert p1.kills == 0
+        assert p1.deaths == 1
+        assert p1.suicides == 1

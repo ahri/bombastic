@@ -4,6 +4,7 @@
 from collections import deque
 from udeque import udeque
 import os
+import random
 
 class Arena(object):
 
@@ -30,9 +31,13 @@ class Arena(object):
         """Add an object by coords"""
         self._get_list(coords).append(obj)
 
-    def coords_get(self, coords):
-        """Get a list of objects by coords"""
+    def coords_get_real(self, coords):
+        """Get the list of objects at a set of coords"""
         return self._get_list(coords)
+
+    def coords_get(self, coords):
+        """Get a copy of the list of objects at a set of coords"""
+        return self.coords_get_real(coords)[:]
 
     def coords_remove(self, coords, obj):
         """Remove an object by coords"""
@@ -88,12 +93,31 @@ class GameObject(object):
         """Output debug information"""
         return self.DEBUG_CHR
 
+    def remove(self):
+        self.state.arena.coords_remove(self.coords, self)
+
 class Block(GameObject):
 
     """The indestructible block"""
 
     DEBUG_CHR = 'B'
     ZINDEX = 1
+
+class PowerupFlame(GameObject):
+    DEBUG_CHR = 'f'
+    ZINDEX = 1
+
+    def picked_up(self, player):
+        player.flame += 1
+        self.remove()
+
+class PowerupBomb(GameObject):
+    DEBUG_CHR = 'b'
+    ZINDEX = 1
+
+    def picked_up(self, player):
+        player.bomb += 1
+        self.remove()
 
 class DestructibleBlock(GameObject):
 
@@ -104,7 +128,13 @@ class DestructibleBlock(GameObject):
 
     def flamed(self, flame):
         """What to do when I get flamed; remove self"""
-        self.state.arena.coords_remove(self.coords, self)
+        self.remove()
+
+        rand = random.random()
+        if   0.00 <= rand < 0.15:
+            PowerupFlame(state=self.state, coords=self.coords)
+        elif 0.15 <= rand < 0.30:
+            PowerupBomb(state=self.state, coords=self.coords)
 
 class SpawnPoint(GameObject):
     DEBUG_CHR = 'S'
@@ -135,8 +165,15 @@ class Player(GameObject):
         self.state = None
         self.coords = (-1, -1)
 
+        self._bombs_live = []
+
         self.number = -1
         self.flame = 1
+        self.bomb = 1
+
+        self.kills = 0
+        self.deaths = 0
+        self.suicides = 0
 
     def spawn(self, number, **kwargs):
         self.number = number
@@ -149,8 +186,18 @@ class Player(GameObject):
         else:
             return self.DEBUG_CHR
 
+    def drop_bomb(self):
+        """Drop a bomb on the current coords"""
+        if len(self._bombs_live) < self.bomb:
+            self._bombs_live.append(Bomb(self))
+
     def flamed(self, flame):
-        pass
+        self.deaths += 1
+        if flame.bomb.player == self:
+            self.suicides += 1
+        else:
+            flame.bomb.player.kills += 1
+        self.remove()
 
     def move(self, new_coords):
         """Move a player"""
@@ -161,7 +208,7 @@ class Player(GameObject):
 
             objs.append(o)
 
-        self.state.arena.coords_remove(self.coords, self)
+        self.remove()
         self.state.arena.coords_add(new_coords, self)
         for o in objs:
             o.picked_up(self)
@@ -197,7 +244,7 @@ class Bomb(GameObject):
         self.explode()
 
     def explode(self):
-        self.state.arena.coords_remove(self.coords, self)
+        self.remove()
         self.state.flame_add(self, self.coords)
         self.incinerate(self.coords, (0, -1), self.flame)
         self.incinerate(self.coords, (0, +1), self.flame)
@@ -250,7 +297,7 @@ class Flame(GameObject):
 
     def tick(self):
         """What to do when the game ticks; remove self"""
-        self.bomb.state.arena.coords_remove(self.coords, self)
+        self.remove()
 
 class GameState(object):
 
@@ -268,7 +315,6 @@ class GameState(object):
             'S': SpawnPoint,
         }
 
-        self._bombs = []
         self._flames = []
 
         self.arena_load(["arenas", "default.bmm"])
@@ -361,21 +407,17 @@ class GameState(object):
     def _player_action(self, player, action):
         """Perform player action"""
         px, py = player.coords
-        nx, ny = -1, -1
 
         if action == Player.BOMB:
-            self.bomb_add(player)
+            player.drop_bomb()
         elif action == Player.UP:
-            nx, ny = px, py-1
+            player.move((px, py-1))
         elif action == Player.DOWN:
-            nx, ny = px, py+1
+            player.move((px, py+1))
         elif action == Player.LEFT:
-            nx, ny = px-1, py
+            player.move((px-1, py))
         elif action == Player.RIGHT:
-            nx, ny = px+1, py
-
-        if (nx, ny) != (-1, -1):
-            player.move((nx, ny))
+            player.move((px+1, py))
 
     def _player_sticky(self, player, action):
         """Add actions to "sticky" lookup, if applicable"""
@@ -384,18 +426,15 @@ class GameState(object):
         else:
             self._sticky_actions[player] = action
 
-    def bomb_add(self, player):
-        """Add and track a bomb"""
-        self._bombs.append(Bomb(player))
-
     def _bombs_process(self):
         """Tick bombs and forget about them when their timers run out"""
-        for i, b in enumerate(self._bombs):
-            if b.ticks_left == 0:
-                del self._bombs[i]
-                continue
+        for p in self._sticky_actions:
+            for i, b in enumerate(p._bombs_live):
+                if b.ticks_left == 0:
+                    del p._bombs_live[i]
+                    continue
 
-            b.tick()
+                b.tick()
 
     def flame_add(self, bomb, coords):
         """Add and track some flame"""
