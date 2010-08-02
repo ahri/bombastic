@@ -189,7 +189,11 @@ class Player(GameObject):
     def drop_bomb(self):
         """Drop a bomb on the current coords"""
         if len(self._bombs_live) < self.bomb:
-            self._bombs_live.append(Bomb(self))
+            bomb = Bomb(self)
+            self._bombs_live.append(bomb)
+            return bomb
+
+        return None
 
     def flamed(self, flame):
         self.deaths += 1
@@ -275,7 +279,7 @@ class Bomb(GameObject):
 
     def flamed(self, flame):
         """What to do when I get flamed; explode"""
-        pass
+        self.explode()
 
 
 class Flame(GameObject):
@@ -298,6 +302,10 @@ class Flame(GameObject):
     def tick(self):
         """What to do when the game ticks; remove self"""
         self.remove()
+
+    def flamed(self, flame):
+        """Don't do anything when flamed"""
+        pass
 
 class GameState(object):
 
@@ -375,11 +383,12 @@ class GameState(object):
                 player.spawn(p_no, state=self, coords=(x, y))
                 self._sticky_actions[player] = None
 
-    def tick(self):
+    def tick(self, count=1):
         """Step to the next game state"""
-        self._flames_process()
-        self._actions_process()
-        self._bombs_process()
+        for _ in xrange(count):
+            self._flames_process()
+            self._actions_process()
+            self._bombs_process()
 
     def action_add(self, player, action):
         """Add player actions to a queue for processing"""

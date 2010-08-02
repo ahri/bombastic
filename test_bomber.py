@@ -321,22 +321,10 @@ class TestGameState:
         p1.flame = 10
         state.player_add(p1)
         state.spawn()
-
-        bomb = Bomb(p1)
-
+        bomb = p1.drop_bomb()
         assert bomb.flame == p1.flame
         assert bomb.coords == p1.coords
-
-        assert bomb.ticks_left == 4
-        bomb.tick()
-        assert bomb.ticks_left == 3
-        bomb.tick()
-        assert bomb.ticks_left == 2
-        bomb.tick()
-        assert bomb.ticks_left == 1
-        assert state.arena.coords_have_obj(bomb.coords, bomb)
-        bomb.tick()
-        assert bomb.ticks_left == 0
+        state.tick(count=4)
         assert not state.arena.coords_have_obj(bomb.coords, bomb)
 
     def test_bombing(self):
@@ -348,9 +336,7 @@ class TestGameState:
         state.action_add(p1, Player.BOMB)
         state.tick()
         assert state.arena.coords_have_class(p1.coords, Bomb)
-        state.tick()
-        state.tick()
-        state.tick()
+        state.tick(count=3)
         assert not state.arena.coords_have_class(p1.coords, Bomb)
         assert state.arena.coords_have_class(p1.coords, Flame)
 
@@ -544,6 +530,7 @@ class TestGameState:
         """Bombs should blow other bombs up"""
         state = GameState()
         p1 = Player()
+        p1.bomb = 2
         state.player_add(p1)
         state.spawn()
         state.action_add(p1, Player.RIGHT)
@@ -556,6 +543,9 @@ class TestGameState:
         state.tick()
         state.tick()
         assert not state.arena.coords_have_class((1, 1), Bomb)
+        assert state.arena.coords_have_class((1, 1), Flame)
+        assert state.arena.coords_have_class((1, 2), Flame)
+        assert state.arena.coords_have_class((2, 1), Flame)
 
     def test_player_kills_deaths_counter(self):
         """Count how many kills/deaths have occurred"""
@@ -604,3 +594,14 @@ class TestGameState:
         assert p1.kills == 0
         assert p1.deaths == 1
         assert p1.suicides == 1
+
+    def test_chain_explosion_kills(self):
+        """
+        If your bomb is ignited by someone else's and kills you, that counts as a kill for them, not a suicide
+        Essentially; your bomb becomes their bomb, because they blew it up
+        """
+        assert False
+
+    def test_powerup_flamed(self):
+        """Powerups should be destroyed when flamed"""
+        assert False
