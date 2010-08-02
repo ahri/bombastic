@@ -595,13 +595,82 @@ class TestGameState:
         assert p1.deaths == 1
         assert p1.suicides == 1
 
+    def test_powerup_flamed(self):
+        """Powerups should be destroyed when flamed"""
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        flame = PowerupFlame(state=state, coords=(2,1))
+        p1.drop_bomb()
+        assert state.arena.coords_have_class((2, 1), PowerupFlame)
+        assert state.arena.coords_have_class((1, 1), Bomb)
+        state.tick(count=4)
+        assert not state.arena.coords_have_class((2, 1), PowerupFlame)
+        assert not state.arena.coords_have_class((1, 1), Bomb)
+
     def test_chain_explosion_kills(self):
         """
         If your bomb is ignited by someone else's and kills you, that counts as a kill for them, not a suicide
         Essentially; your bomb becomes their bomb, because they blew it up
         """
-        assert False
+        state = GameState()
+        state.arena_load(["arenas", "empty.bmm"])
+        p1 = Player()
+        p2 = Player()
+        p3 = Player()
+        p4 = Player()
+        p5 = Player()
+        p6 = Player()
+        p7 = Player()
+        p8 = Player()
+        p1.spawn(1, state=state, coords=(7, 2))
+        p2.spawn(2, state=state, coords=(8, 2))
+        p3.spawn(3, state=state, coords=(9, 2))
+        p4.spawn(4, state=state, coords=(9, 3))
+        p5.spawn(5, state=state, coords=(9, 4))
+        p6.spawn(6, state=state, coords=(8, 4))
+        p7.spawn(7, state=state, coords=(7, 4))
+        p8.spawn(8, state=state, coords=(7, 3))
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        state.action_add(p2, Player.BOMB)
+        state.action_add(p3, Player.BOMB)
+        state.action_add(p4, Player.BOMB)
+        state.action_add(p5, Player.BOMB)
+        state.action_add(p6, Player.BOMB)
+        state.action_add(p7, Player.BOMB)
+        state.action_add(p8, Player.BOMB)
+        state.tick(count=3)
 
-    def test_powerup_flamed(self):
-        """Powerups should be destroyed when flamed"""
-        assert False
+        assert p1.kills == 7
+        assert p1.deaths == 1
+        assert p1.suicides == 1
+
+        assert p2.kills == 0
+        assert p2.deaths == 1
+        assert p2.suicides == 0
+
+        assert p3.kills == 0
+        assert p3.deaths == 1
+        assert p3.suicides == 0
+
+        assert p4.kills == 0
+        assert p4.deaths == 1
+        assert p4.suicides == 0
+
+        assert p5.kills == 0
+        assert p5.deaths == 1
+        assert p5.suicides == 0
+
+        assert p6.kills == 0
+        assert p6.deaths == 1
+        assert p6.suicides == 0
+
+        assert p7.kills == 0
+        assert p7.deaths == 1
+        assert p7.suicides == 0
+
+        assert p8.kills == 0
+        assert p8.deaths == 1
+        assert p8.suicides == 0

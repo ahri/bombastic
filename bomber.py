@@ -3,75 +3,9 @@
 
 from collections import deque
 from udeque import udeque
+from arena import Arena
 import os
 import random
-
-class Arena(object):
-
-    """Represent a 2D arena whose coord spaces are stackable"""
-
-    def __init__(self, cols, rows):
-        """Create the data structure"""
-        self.cols = cols
-        self.rows = rows
-        self.data = [[] for _ in xrange(rows*cols)]
-
-    def sanity(self, coords):
-        x, y = coords
-        if not (0 <= x < self.cols) or not (0 <= y < self.rows):
-            raise IndexError("Coords (%d, %d) are not valid: must be in range (0, 0) to (%d, %d)" % (x, y, self.cols-1, self.rows-1))
-
-    def _get_list(self, coords):
-        """The 2D -> 1D convertermatron"""
-        self.sanity(coords)
-        x, y = coords
-        return self.data[x+y*self.cols]
-
-    def coords_add(self, coords, obj):
-        """Add an object by coords"""
-        self._get_list(coords).append(obj)
-
-    def coords_get_real(self, coords):
-        """Get the list of objects at a set of coords"""
-        return self._get_list(coords)
-
-    def coords_get(self, coords):
-        """Get a copy of the list of objects at a set of coords"""
-        return self.coords_get_real(coords)[:]
-
-    def coords_remove(self, coords, obj):
-        """Remove an object by coords"""
-        for i, o in enumerate(self._get_list(coords)):
-            if o == obj:
-                del self._get_list(coords)[i]
-                return o
-
-        raise LookupError("Did not find object")
-
-    # TODO: maybe implement the "have" functions separately so we can use them when iterating, e.g. in GameState.spawn()
-
-    def coords_have_obj(self, coords, obj):
-        """Test for an object by coords"""
-        for o in self._get_list(coords):
-            if o == obj:
-                return True
-
-        return False
-
-    def coords_have_class(self, coords, classref):
-        """Test for a class by coords"""
-        for o in self._get_list(coords):
-            if isinstance(o, classref):
-                return True
-
-        return False
-
-    def __iter__(self):
-        """Iterate over the coords, providing x, y, list"""
-        for i, l in enumerate(self.data):
-            x = i % self.cols
-            y = i / self.cols
-            yield x, y, l
 
 class GameObject(object):
 
@@ -94,6 +28,7 @@ class GameObject(object):
         return self.DEBUG_CHR
 
     def remove(self):
+        """Lots of game objects need to remove themselves, so it's centralised here"""
         self.state.arena.coords_remove(self.coords, self)
 
 class Block(GameObject):
@@ -103,19 +38,37 @@ class Block(GameObject):
     DEBUG_CHR = 'B'
     ZINDEX = 1
 
-class PowerupFlame(GameObject):
+class Powerup(GameObject):
+
+    """Base class for powerups"""
+
+    ZINDEX = 1
+
+    def flamed(self, _):
+        """When flamed, remove"""
+        self.remove()
+
+class PowerupFlame(Powerup):
+
+    """Longer flames!"""
+
     DEBUG_CHR = 'f'
     ZINDEX = 1
 
     def picked_up(self, player):
+        """When picked up by a player, increased that player's powerup stats"""
         player.flame += 1
         self.remove()
 
-class PowerupBomb(GameObject):
+class PowerupBomb(Powerup):
+
+    """More bombs!"""
+
     DEBUG_CHR = 'b'
     ZINDEX = 1
 
     def picked_up(self, player):
+        """When picked up by a player, increased that player's powerup stats"""
         player.bomb += 1
         self.remove()
 
@@ -137,13 +90,18 @@ class DestructibleBlock(GameObject):
             PowerupBomb(state=self.state, coords=self.coords)
 
 class SpawnPoint(GameObject):
+
+    """Starting point for spawned players"""
+
     DEBUG_CHR = 'S'
     ZINDEX = 1
 
     def flamed(self, flame):
+        """SpawnPoints are indestructible"""
         pass
 
     def picked_up(self, player):
+        """SpawnPoints cannot be picked up"""
         pass
 
 class Player(GameObject):
@@ -176,6 +134,7 @@ class Player(GameObject):
         self.suicides = 0
 
     def spawn(self, number, **kwargs):
+        """Do our (delayed) init"""
         self.number = number
         super(Player, self).__init__(state=kwargs["state"], coords=kwargs["coords"])
 
@@ -196,6 +155,7 @@ class Player(GameObject):
         return None
 
     def flamed(self, flame):
+        """What happens when a player catches fire? Depends whose fault it is..."""
         self.deaths += 1
         if flame.bomb.player == self:
             self.suicides += 1
@@ -222,6 +182,7 @@ class Player(GameObject):
         return True
 
     def picked_up(self, player):
+        """Picked up by another player? Nah"""
         pass
 
 class Bomb(GameObject):
@@ -248,6 +209,7 @@ class Bomb(GameObject):
         self.explode()
 
     def explode(self):
+        """Probably the most important method in the game"""
         self.remove()
         self.state.flame_add(self, self.coords)
         self.incinerate(self.coords, (0, -1), self.flame)
@@ -277,8 +239,9 @@ class Bomb(GameObject):
                         coord_mod,
                         flame-1)
 
-    def flamed(self, _):
-        """What to do when I get flamed; explode"""
+    def flamed(self, flame):
+        """What to do when I get flamed; become property of flamer and explode"""
+        self.player = flame.bomb.player
         self.explode()
 
 
