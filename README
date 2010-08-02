@@ -6,18 +6,14 @@ Bomber will be:
         multiplayer (local, network later)
         flexible as far as clients go
         a way for me to learn more python
+        
+Status:
+        Turn based game engine working to Alpha level
 
 Plan:
-        output a map
-        load a map
-        add a player
-        spawn a player
-        move a player
-        drop a bomb
-        explode a bomb
-        blow up a wall
-        kill a player
-        upgrade player
+        GUI interface (still turn-based)
+        Move to time-based, smoother GUI, bombs tick down over 3 seconds
+        Networking
 
 Libraries:
         http://github.com/saucelabs/monocle
