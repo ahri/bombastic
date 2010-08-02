@@ -1,22 +1,26 @@
 Bomber will be:
-        dedicated to Jenn
-        a bomberman clone
-        multi platform
-        event based
-        multiplayer (local, network later)
-        flexible as far as clients go
-        a way for me to learn more python
+        Dedicated to Jenn
+        A bomberman clone
+        Multi platform
+        Event based
+        Multiplayer (local, network later)
+        Flexible as far as clients go
+        A way for me to learn more python
         
 Status:
         Turn based game engine working to Alpha level
 
 Plan:
-        GUI interface (still turn-based)
-        Move to time-based, smoother GUI, bombs tick down over 3 seconds
-        Networking
+        Move to event-based
+        Move to time-based, bombs tick down over 3 seconds
+        GUI interface (Linux/Windows/Mac)
+        Networking (Client/Server)
+        Consider Stackless for Server
+        Console interface for POSIX (curses)
 
-Libraries:
+Potential library choices:
         http://github.com/saucelabs/monocle
+        http://www.gevent.org/
 
 License:
         See COPYING
