@@ -420,30 +420,30 @@ class GameState(object):
 
 # TODO: remove this debugging stuff
 if __name__ == "bomber":
-    s = GameState()
+    state = GameState()
     p1 = Player()
-    s.player_add(p1)
-    s.spawn()
+    state.player_add(p1)
+    state.spawn()
     print(s)
 
     def up():
-        s.action_add(p1, Player.UP)
+        state.action_add(p1, Player.UP)
         tick()
 
     def down():
-        s.action_add(p1, Player.DOWN)
+        state.action_add(p1, Player.DOWN)
         tick()
 
     def left():
-        s.action_add(p1, Player.LEFT)
+        state.action_add(p1, Player.LEFT)
         tick()
 
     def right():
-        s.action_add(p1, Player.RIGHT)
+        state.action_add(p1, Player.RIGHT)
         tick()
 
     def bomb():
-        s.action_add(p1, Player.BOMB)
+        state.action_add(p1, Player.BOMB)
         tick()
 
     def tick():
