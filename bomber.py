@@ -14,7 +14,7 @@ class Arena(object):
         """Create the data structure"""
         self.cols = cols
         self.rows = rows
-        self.data = [[] for i in xrange(rows*cols)]
+        self.data = [[] for _ in xrange(rows*cols)]
 
     def sanity(self, coords):
         x, y = coords
@@ -48,7 +48,7 @@ class Arena(object):
 
         raise LookupError("Did not find object")
 
-    # TODO: maybe implement the "have" functions separately so we can use them when iterating
+    # TODO: maybe implement the "have" functions separately so we can use them when iterating, e.g. in GameState.spawn()
 
     def coords_have_obj(self, coords, obj):
         """Test for an object by coords"""
@@ -126,8 +126,8 @@ class DestructibleBlock(GameObject):
     DEBUG_CHR = '.'
     ZINDEX = 1
 
-    def flamed(self, flame):
-        """What to do when I get flamed; remove self"""
+    def flamed(self, _):
+        """What to do when I get flamed; remove self, spawn a powerup (maybe)"""
         self.remove()
 
         rand = random.random()
@@ -277,7 +277,7 @@ class Bomb(GameObject):
                         coord_mod,
                         flame-1)
 
-    def flamed(self, flame):
+    def flamed(self, _):
         """What to do when I get flamed; explode"""
         self.explode()
 
@@ -294,7 +294,6 @@ class Flame(GameObject):
         self.bomb = bomb
         super(Flame, self).__init__(state=bomb.state, coords=coords)
 
-        objs = []
         for o in self.state.arena.coords_get(coords):
             if o != self:
                 o.flamed(self)
@@ -456,6 +455,7 @@ class GameState(object):
 
         self._flames = []
 
+# TODO: remove this debugging stuff
 if __name__ == "bomber":
     s = GameState()
     p1 = Player()
@@ -486,3 +486,21 @@ if __name__ == "bomber":
     def tick():
         s.tick()
         print(s)
+
+    def u():
+        up()
+
+    def d():
+        down()
+
+    def l():
+        left()
+
+    def r():
+        right()
+
+    def b():
+        bomb()
+
+    def t():
+        tick()
