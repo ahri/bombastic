@@ -23,4 +23,5 @@ Potential library choices:
         http://www.gevent.org/
 
 License:
-        See COPYING
+        AGPLv3; as infectious an open source license as I know exists
+        See COPYING/LICENSE
