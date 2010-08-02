@@ -424,7 +424,7 @@ if __name__ == "bomber":
     p1 = Player()
     state.player_add(p1)
     state.spawn()
-    print(s)
+    print(state)
 
     def up():
         state.action_add(p1, Player.UP)
@@ -447,23 +447,12 @@ if __name__ == "bomber":
         tick()
 
     def tick():
-        s.tick()
-        print(s)
+        state.tick()
+        print(state)
 
-    def u():
-        up()
-
-    def d():
-        down()
-
-    def l():
-        left()
-
-    def r():
-        right()
-
-    def b():
-        bomb()
-
-    def t():
-        tick()
+    u = up
+    d = down
+    l = left
+    r = right
+    b = bomb
+    t = tick
