@@ -4,6 +4,7 @@
 from collections import deque
 from udeque import udeque
 from arena import Arena
+from time import sleep
 import os
 import random
 
@@ -456,3 +457,13 @@ if __name__ == "bomber":
     r = right
     b = bomb
     t = tick
+
+if __name__ == "__main__":
+    # main game loop prototype
+    # port should be 21513
+    TICKS_PER_SECOND = 2
+
+    state = GameState()
+    while True:
+        sleep(1.0/TICKS_PER_SECOND)
+        state.tick()
