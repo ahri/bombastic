@@ -21,7 +21,7 @@ class TestArena:
         """Add object to given coords"""
         arena = Arena(1, 2)
         obj = object()
-        assert arena.coords_add((0, 1), obj) == None
+        assert arena.coords_add((0, 1), obj) is None
         assert arena.data == [[], [obj]]
 
     def test_coords_get(self):
