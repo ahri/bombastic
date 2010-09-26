@@ -392,6 +392,10 @@ class TestGameState:
         assert state.arena.coords_have_class((1, 3), Flame)
         assert not state.arena.coords_have_class((1, 3), DestructibleBlock)
 
+    def test_blow_up_destructible_stops_flame(self):
+        """Make sure that destructible blocks stop flames from progressing"""
+        pass
+
     def test_player_death(self):
         """Kill a player"""
         state = GameState()
