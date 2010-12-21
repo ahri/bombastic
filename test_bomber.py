@@ -3,12 +3,12 @@
 
 # http://docs.python.org/library/exceptions.html
 
-from py import test
+from unittest import TestCase
 from bomber import *
 import os
 import random
 
-class TestArena:
+class TestArena(TestCase):
 
     """Quality control for base data structure"""
 
@@ -42,8 +42,7 @@ class TestArena:
         assert arena.coords_remove((0, 1), obj1) == obj1
         assert arena.data == [[], [obj2, obj1]]
 
-        with test.raises(LookupError):
-            arena.coords_remove((0, 0), obj1)
+        self.assertRaises(LookupError, arena.coords_remove, (0, 0), obj1)
 
     def test_coords_have_obj(self):
         """Coords contain an specified object"""
@@ -83,23 +82,12 @@ class TestArena:
         """Expect exceptions for out of range coords"""
         arena = Arena(3, 4)
 
-        with test.raises(IndexError):
-            arena.sanity((-1, 0))
-
-        with test.raises(IndexError):
-            arena.sanity((0, -1))
-
-        with test.raises(IndexError):
-            arena.sanity((-1, -1))
-
-        with test.raises(IndexError):
-            arena.sanity((3, 3))
-
-        with test.raises(IndexError):
-            arena.sanity((2, 4))
-
-        with test.raises(IndexError):
-            arena.sanity((3, 4))
+        self.assertRaises(IndexError, arena.sanity, (-1, 0))
+        self.assertRaises(IndexError, arena.sanity, (0, -1))
+        self.assertRaises(IndexError, arena.sanity, (-1, -1))
+        self.assertRaises(IndexError, arena.sanity, (3, 3))
+        self.assertRaises(IndexError, arena.sanity, (2, 4))
+        self.assertRaises(IndexError, arena.sanity, (4, 3))
 
 class TestGameState:
 
