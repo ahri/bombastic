@@ -666,3 +666,22 @@ class TestGameState:
         assert p8.kills == 0
         assert p8.deaths == 1
         assert p8.suicides == 0
+
+    def test_flame_stops_at_destructable(self):
+        state = GameState()
+        p1 = Player()
+        p1.flame = 2
+        state.player_add(p1)
+        state.spawn()
+        state.action_add(p1, Player.RIGHT)
+        state.tick()
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        state.action_add(p1, Player.LEFT)
+        state.tick()
+        state.action_add(p1, Player.DOWN)
+        state.tick()
+        state.tick()
+        assert state.arena.coords_have_class((2, 1), Flame)
+        assert state.arena.coords_have_class((3, 1), Flame)
+        assert not state.arena.coords_have_class((4, 1), Flame)
