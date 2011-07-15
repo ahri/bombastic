@@ -18,9 +18,9 @@ class GameObject(object):
     DEBUG_CHR = ' '
     ZINDEX = 0
 
-    def __init__(self, **kwargs):
-        self.state = kwargs["state"]
-        self.coords = kwargs["coords"]
+    def __init__(self, state, coords):
+        self.state = state
+        self.coords = coords
         if self.state:
             self.state.arena.coords_add(self.coords, self)
 
@@ -134,10 +134,10 @@ class Player(GameObject):
         self.deaths = 0
         self.suicides = 0
 
-    def spawn(self, number, **kwargs):
+    def spawn(self, number, state, coords):
         """Do our (delayed) init"""
         self.number = number
-        super(Player, self).__init__(state=kwargs["state"], coords=kwargs["coords"])
+        super(Player, self).__init__(state=state, coords=coords)
 
     def __str__(self):
         """Output debug information"""
@@ -198,7 +198,7 @@ class Bomb(GameObject):
         self.player = player
         self.flame = player.flame
         self.ticks_left = 4
-        super(Bomb, self).__init__(state=player.state, coords=player.coords)
+        super(Bomb, self).__init__(player.state, player.coords)
 
     def tick(self):
         """What to do when the game ticks; count down and explode"""
@@ -256,7 +256,7 @@ class Flame(GameObject):
     def __init__(self, bomb, coords):
         """Set up some defaults and references"""
         self.bomb = bomb
-        super(Flame, self).__init__(state=bomb.state, coords=coords)
+        super(Flame, self).__init__(bomb.state, coords)
 
         for o in self.state.arena.coords_get(coords):
             if o != self:
