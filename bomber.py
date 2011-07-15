@@ -164,6 +164,7 @@ class Player(GameObject):
         else:
             flame.bomb.player.kills += 1
         self.remove()
+        self.coords = None
 
     def move(self, new_coords):
         """Move a player"""
@@ -385,7 +386,11 @@ class GameState(object):
 
     def _player_action(self, player, action):
         """Perform player action"""
-        px, py = player.coords
+        try:
+            px, py = player.coords
+        except TypeError:
+            # coords are invalid, player is not in the arena: noop
+            return
 
         if action == Player.BOMB:
             player.drop_bomb()
