@@ -75,7 +75,7 @@ class PowerupBomb(Powerup):
 
 class DestructibleBlock(GameObject):
 
-    """The indestructible block"""
+    """The destructible block"""
 
     DEBUG_CHR = '.'
     ZINDEX = 1
