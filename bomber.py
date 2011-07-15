@@ -229,8 +229,11 @@ class Bomb(GameObject):
         if self.state.arena.coords_have_class(coords, Block):
             return
 
+        # keep note if we have a DestructibleBlock, as it'll removed itself before we check on it
+        destructible = self.state.arena.coords_have_class(coords, DestructibleBlock)
+
         self.state.flame_add(self, coords)
-        if self.state.arena.coords_have_class(coords, DestructibleBlock):
+        if destructible:
             return
 
         if flame == 1:
