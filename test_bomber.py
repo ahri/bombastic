@@ -322,11 +322,12 @@ class TestGameState:
         state.player_add(p1)
         state.spawn()
         state.action_add(p1, Player.BOMB)
+        coords = p1.coords # store coords as p1 will die
         state.tick()
-        assert state.arena.coords_have_class(p1.coords, Bomb)
+        assert state.arena.coords_have_class(coords, Bomb)
         state.tick(count=3)
-        assert not state.arena.coords_have_class(p1.coords, Bomb)
-        assert state.arena.coords_have_class(p1.coords, Flame)
+        assert not state.arena.coords_have_class(coords, Bomb)
+        assert state.arena.coords_have_class(coords, Flame)
 
     def test_no_flame_on_blocks(self):
         """Add a bomb and tick the game to blow it up"""
@@ -391,11 +392,12 @@ class TestGameState:
         state.player_add(p1)
         state.spawn()
         state.action_add(p1, Player.BOMB)
+        coords = p1.coords # store coords as p1 will die
         state.tick()
         state.tick()
         state.tick()
         state.tick()
-        assert not state.arena.coords_have_obj(p1.coords, p1)
+        assert not state.arena.coords_have_obj(coords, p1)
 
     def test_player_bombs_max(self):
         """Make sure that player can only drop the number of bombs they have powerups for"""
