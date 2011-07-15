@@ -123,11 +123,11 @@ class Player(GameObject):
     def __init__(self):
         """Set up some defaults"""
         self.state = None
-        self.coords = (-1, -1)
+        self.coords = None
 
         self._bombs_live = []
 
-        self.number = -1
+        self.number = None
         self.flame = 1
         self.bomb = 1
 
