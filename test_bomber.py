@@ -685,3 +685,16 @@ class TestGameState:
         assert state.arena.coords_have_class((2, 1), Flame)
         assert state.arena.coords_have_class((3, 1), Flame)
         assert not state.arena.coords_have_class((4, 1), Flame)
+
+    def test_player_move_after_death(self):
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        state.tick()
+        state.tick()
+        state.tick()
+        state.action_add(p1, Player.DOWN)
+        state.tick()
