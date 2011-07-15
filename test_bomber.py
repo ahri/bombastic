@@ -137,7 +137,7 @@ class TestGameState:
         assert p2.number == 2
         assert p3.number == 3
         assert p4.number == 4
-        assert p5.number == -1
+        assert p5.number is None
 
         assert state.arena.coords_have_obj((1, 1), p1)
         assert state.arena.coords_have_obj((37, 1), p2)
