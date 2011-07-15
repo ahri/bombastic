@@ -7,12 +7,10 @@ from arena import Arena
 from time import sleep
 import os
 import random
-import codecs
 
 class GameObject(object):
 
     """
-
     Extendable class for items represented in the game arena
     Mostly populated with debugging helpers
     """
@@ -299,7 +297,7 @@ class GameState(object):
         """Load an arena from a file"""
         lines = []
 
-        with codecs.open(os.sep.join(filename_list), 'r', 'UTF-8') as fp:
+        with open(os.sep.join(filename_list), 'r') as fp:
             for line in fp:
                 lines.append(line.rstrip())
 
