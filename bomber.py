@@ -332,6 +332,9 @@ class GameState(object):
 
         return ''.join(chars)
 
+    def __repr__(self):
+        return str(self)
+
     def player_add(self, player):
         """Add a player to the game state"""
         self._player_queue.appendleft(player)
