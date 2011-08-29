@@ -361,6 +361,21 @@ class GameState(object):
             self._actions_process()
             self._bombs_process()
 
+    def tick_flames(self):
+        self._flames_process()
+        from twisted.internet import reactor
+        reactor.callLater(FLAME_TICK_TIME, self.tick_flames)
+
+    def tick_actions(self):
+        self._actions_process()
+        from twisted.internet import reactor
+        reactor.callLater(ACTION_TICK_TIME, self.tick_actions)
+
+    def tick_bombs(self):
+        self._bombs_process()
+        from twisted.internet import reactor
+        reactor.callLater(BOMB_TICK_TIME, self.tick_bombs)
+
     def action_add(self, player, action):
         """Add player actions to a queue for processing"""
         self._action_queue.appendleft((player, action))
@@ -471,11 +486,22 @@ if __name__ == "bomber":
     t = tick
 
 if __name__ == "__main__":
+    from twisted.internet import reactor
     # main game loop prototype
     # port should be 21513
-    TICKS_PER_SECOND = 2
+
+    FLAME_TICK_TIME  = 1
+    ACTION_TICK_TIME = 1
+    BOMB_TICK_TIME   = 1
 
     state = GameState()
-    while True:
-        sleep(1.0/TICKS_PER_SECOND)
-        state.tick()
+    reactor.callWhenRunning(state.tick_flames)
+    reactor.callWhenRunning(state.tick_actions)
+    reactor.callWhenRunning(state.tick_bombs)
+    def out():
+        print state
+        reactor.callLater(1, out)
+
+    reactor.callWhenRunning(out)
+
+    reactor.run()
