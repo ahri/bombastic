@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from twisted.internet import reactor
-from twisted.web import server, resource
+from twisted.web import server, resource, http
 import simplejson as json
 import uuid
 from bomber import GameState, Player
@@ -10,6 +10,28 @@ from bomber import GameState, Player
 FLAME_TICK_TIME  = 1
 ACTION_TICK_TIME = 1
 BOMB_TICK_TIME   = 1
+
+uid = lambda: uuid.uuid4().hex
+
+class Forbidden(resource.Resource):
+
+    """
+    Forbidden page
+    """
+
+    def render(self, request):
+        request.setResponseCode(http.BAD_REQUEST)
+        return 'Forbidden'
+
+class Forbidden(resource.Resource):
+
+    """
+    Forbidden page
+    """
+
+    def render(self, request):
+        request.setResponseCode(http.BAD_REQUEST)
+        return 'Forbidden'
 
 class BomberResource(resource.Resource):
 
@@ -57,23 +79,26 @@ class BomberAdmin(BomberResource):
         return "Supply the admin UID"
 
     def getChild(self, uid, request):
-        return BomberAdminUid(self.state, uid)
+        if uid != self.state['admin_uid']:
+            return Forbidden()
 
-class BomberAdminUid(BomberResource):
+        return BomberAdminValid(self.state)
+
+class BomberAdminValid(BomberResource):
 
     """
-    Handle /admin/uid
+    Handle (valid) /admin/uid
     """
-
-    def __init__(self, state, uid, *args, **kwargs):
-        BomberResource.__init__(self, state)
-        self.attempt_uid = uid
 
     def render_GET(self, request):
-        return "admin!" if self.attempt_uid == self.state['admin_uid'] else 'not admin'
+        return json.dumps("admin!")
+
+    def render_PUT(self, request):
+        pass
 
     def getChild(self, uid, request):
         return self
+
 
 class BomberState(BomberResource):
 
@@ -92,7 +117,7 @@ class BomberPlayer(BomberResource):
 
     def render_POST(self, request):
         p = Player()
-        uid = uuid.uuid4().hex
+        uid = uid()
         self.state['players'][uid] = p
         self.state['game'].player_add(p)
         request.redirect('/player/' + uid)
@@ -156,7 +181,7 @@ class BomberPlayerUid(BomberResource):
 
 
 if __name__ == '__main__':
-    admin_uid = uuid.uuid4().hex
+    admin_uid = uid()
     print "Admin uid:", admin_uid
 
     state = GameState()

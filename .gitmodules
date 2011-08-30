@@ -1,0 +1,3 @@
+[submodule "pycurlbrowser"]
+	path = pycurlbrowser
+	url = http://github.com/ahri/pycurlbrowser.git
