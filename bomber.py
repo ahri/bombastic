@@ -361,21 +361,6 @@ class GameState(object):
             self._actions_process()
             self._bombs_process()
 
-    def tick_flames(self):
-        self._flames_process()
-        from twisted.internet import reactor
-        reactor.callLater(FLAME_TICK_TIME, self.tick_flames)
-
-    def tick_actions(self):
-        self._actions_process()
-        from twisted.internet import reactor
-        reactor.callLater(ACTION_TICK_TIME, self.tick_actions)
-
-    def tick_bombs(self):
-        self._bombs_process()
-        from twisted.internet import reactor
-        reactor.callLater(BOMB_TICK_TIME, self.tick_bombs)
-
     def action_add(self, player, action):
         """Add player actions to a queue for processing"""
         self._action_queue.appendleft((player, action))
@@ -445,63 +430,3 @@ class GameState(object):
             f.tick()
 
         self._flames = []
-
-# TODO: remove this debugging stuff
-if __name__ == "bomber":
-    state = GameState()
-    p1 = Player()
-    state.player_add(p1)
-    state.spawn()
-    print(state)
-
-    def up():
-        state.action_add(p1, Player.UP)
-        tick()
-
-    def down():
-        state.action_add(p1, Player.DOWN)
-        tick()
-
-    def left():
-        state.action_add(p1, Player.LEFT)
-        tick()
-
-    def right():
-        state.action_add(p1, Player.RIGHT)
-        tick()
-
-    def bomb():
-        state.action_add(p1, Player.BOMB)
-        tick()
-
-    def tick():
-        state.tick()
-        print(state)
-
-    u = up
-    d = down
-    l = left
-    r = right
-    b = bomb
-    t = tick
-
-if __name__ == "__main__":
-    from twisted.internet import reactor
-    # main game loop prototype
-    # port should be 21513
-
-    FLAME_TICK_TIME  = 1
-    ACTION_TICK_TIME = 1
-    BOMB_TICK_TIME   = 1
-
-    state = GameState()
-    reactor.callWhenRunning(state.tick_flames)
-    reactor.callWhenRunning(state.tick_actions)
-    reactor.callWhenRunning(state.tick_bombs)
-    def out():
-        print state
-        reactor.callLater(1, out)
-
-    reactor.callWhenRunning(out)
-
-    reactor.run()
