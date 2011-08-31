@@ -156,6 +156,7 @@ class BomberPlayerValid(BomberResource):
         if 'name' in data:
             self.player.name = data['name']
 
+        return ''
 
     def render_DELETE(self, request):
         return json.dumps('TODO')
