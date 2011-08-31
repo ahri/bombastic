@@ -120,7 +120,7 @@ class BomberPlayer(BomberResource):
             uid = uuid.uuid4().hex
         self.state['players'][uid] = p
         self.state['game'].player_add(p)
-        return util.redirectTo('/player/' + uid, request)
+        return BomberPlayerValid(self.state, uid).render_GET(request)
 
     def getChild(self, uid, request):
         if uid not in self.state['players']:
@@ -156,7 +156,7 @@ class BomberPlayerValid(BomberResource):
         if 'name' in data:
             self.player.name = data['name']
 
-        return ''
+        return self.render_GET(request)
 
     def render_DELETE(self, request):
         return json.dumps('TODO')
