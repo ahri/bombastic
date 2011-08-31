@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from twisted.internet import reactor
-from twisted.web import server, resource, http
+from twisted.web import server, resource, http, util
 import simplejson as json
 import uuid
 from bomber import GameState, Player
@@ -10,8 +10,6 @@ from bomber import GameState, Player
 FLAME_TICK_TIME  = 1
 ACTION_TICK_TIME = 1
 BOMB_TICK_TIME   = 1
-
-uid = lambda: uuid.uuid4().hex
 
 class Forbidden(resource.Resource):
 
@@ -117,12 +115,12 @@ class BomberPlayer(BomberResource):
 
     def render_POST(self, request):
         p = Player()
-        uid = uid()
+        uid = uuid.uuid4().hex
+        while uid in self.state['players']:
+            uid = uuid.uuid4().hex
         self.state['players'][uid] = p
         self.state['game'].player_add(p)
-        request.redirect('/player/' + uid)
-        request.finish()
-        return twisted.web.server.NOT_DONE_YET # http://stackoverflow.com/questions/3254965/why-does-twisted-think-im-calling-request-finish-twice-when-i-am-not -- doesn't seem to help though......
+        return util.redirectTo('/player/' + uid, request)
 
     def getChild(self, uid, request):
         return BomberPlayerUid(self.state, uid)
@@ -138,9 +136,9 @@ class BomberPlayerUid(BomberResource):
         self.uid = uid
 
     def render_GET(self, request):
-        if self.uid not in self.players:
+        if self.uid not in self.state['players']:
             # TODO: 404
-            return 'meh'
+            return json.dumps('meh')
 
         return json.dumps({'uid': self.uid})
 
@@ -181,7 +179,7 @@ class BomberPlayerUid(BomberResource):
 
 
 if __name__ == '__main__':
-    admin_uid = uid()
+    admin_uid = uuid.uuid4().hex
     print "Admin uid:", admin_uid
 
     state = GameState()
