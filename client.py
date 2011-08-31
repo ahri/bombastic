@@ -34,7 +34,6 @@ def player_action_command(uid, action, base=BASE):
 def player_name_command(uid, name, base=BASE):
     """Name an existing player"""
     rc = RestClientJson(base)
-    rc.set_debug(True)
     print rc.put('player', uid, dict(name=name))
 
 if __name__ == '__main__':
