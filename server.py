@@ -142,7 +142,7 @@ class BomberPlayerValid(BomberResource):
     def render_GET(self, request):
         info = dict(uid=self.uid)
         for stat in 'state', 'coords', 'number', 'flame',\
-                    'bomb', 'kills', 'deaths', 'suicides':
+                    'bomb', 'kills', 'deaths', 'suicides', 'name':
             info[stat] = getattr(self.player, stat)
 
         return json.dumps(info)
@@ -153,7 +153,9 @@ class BomberPlayerValid(BomberResource):
             action = getattr(Player, data['action'])
             self.player.action_add(action)
 
-        return util.redirectTo('/player/' + self.uid, request)
+        if 'name' in data:
+            self.player.name = data['name']
+
 
     def render_DELETE(self, request):
         return 'DELETE'
