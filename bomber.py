@@ -135,6 +135,8 @@ class Player(GameObject):
         self.deaths = 0
         self.suicides = 0
 
+        self.name = 'Nameless'
+
     def spawn(self, number, state, coords):
         """Do our (delayed) init"""
         self.number = number
