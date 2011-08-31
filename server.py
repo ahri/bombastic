@@ -19,17 +19,17 @@ class Forbidden(resource.Resource):
 
     def render(self, request):
         request.setResponseCode(http.BAD_REQUEST)
-        return 'Forbidden'
+        return json.loads('Forbidden')
 
-class Forbidden(resource.Resource):
+class Invalid(resource.Resource):
 
     """
-    Forbidden page
+    Invalid page
     """
 
     def render(self, request):
         request.setResponseCode(http.BAD_REQUEST)
-        return 'Forbidden'
+        return json.loads('Invalid')
 
 class BomberResource(resource.Resource):
 
@@ -123,27 +123,37 @@ class BomberPlayer(BomberResource):
         return util.redirectTo('/player/' + uid, request)
 
     def getChild(self, uid, request):
-        return BomberPlayerUid(self.state, uid)
+        if uid not in self.state['players']:
+            return Invalid()
 
-class BomberPlayerUid(BomberResource):
+        return BomberPlayerValid(self.state, uid)
+
+class BomberPlayerValid(BomberResource):
 
     """
-    Handle /player/uid
+    Handle /player/UID
     """
 
     def __init__(self, state, uid, *args, **kwargs):
         BomberResource.__init__(self, state, *args, **kwargs)
         self.uid = uid
+        self.player = self.state['players'][uid]
 
     def render_GET(self, request):
-        if self.uid not in self.state['players']:
-            # TODO: 404
-            return json.dumps('meh')
+        info = dict(uid=self.uid)
+        for stat in 'state', 'coords', 'number', 'flame',\
+                    'bomb', 'kills', 'deaths', 'suicides':
+            info[stat] = getattr(self.player, stat)
 
-        return json.dumps({'uid': self.uid})
+        return json.dumps(info)
 
     def render_PUT(self, request):
-        return 'PUT'
+        data = json.loads(request.content.read())
+        if 'action' in data:
+            action = getattr(Player, data['action'])
+            self.player.action_add(action)
+
+        return util.redirectTo('/player/' + self.uid, request)
 
     def render_DELETE(self, request):
         return 'DELETE'
