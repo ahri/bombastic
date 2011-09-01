@@ -89,7 +89,12 @@ class BomberAdminValid(BomberResource):
     """
 
     def render_GET(self, request):
-        return json.dumps("admin!")
+        # list players
+        return json.dumps([dict(uid=uid,
+                                name=player.name,
+                                number=player.number,
+                                coords=player.coords) for
+                            uid, player in self.state['players'].items()])
 
     def render_PUT(self, request):
         data = json.loads(request.content.read())
