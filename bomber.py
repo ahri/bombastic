@@ -179,10 +179,9 @@ class Player(GameObject):
 
         self.remove()
         self.state.arena.coords_add(new_coords, self)
+        self.coords = new_coords
         for o in objs:
             o.picked_up(self)
-
-        self.coords = new_coords
 
         return True
 
@@ -276,6 +275,10 @@ class Flame(GameObject):
     def flamed(self, flame):
         """Don't do anything when flamed"""
         pass
+
+    def picked_up(self, player):
+        """What to do when a player picks us up?; flame 'em"""
+        player.flamed(self)
 
 class GameState(object):
 
