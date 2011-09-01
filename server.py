@@ -173,7 +173,12 @@ class BomberPlayerValid(BomberResource):
         return self.render_GET(request)
 
     def render_DELETE(self, request):
-        self.state['game'].player_remove(self.player)
+        del self.state['players'][self.uid]
+        try:
+            self.state['game'].player_remove(self.player)
+        except KeyError:
+            pass
+
         return self.render_GET(request)
 
 # TODO:
