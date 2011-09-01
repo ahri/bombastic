@@ -125,6 +125,11 @@ class BomberPlayer(BomberResource):
             uid = uuid.uuid4().hex
         self.state['players'][uid] = p
         self.state['game'].player_add(p)
+
+        data = json.loads(request.content.read())
+        if data is not None and 'name' in data:
+            p.name = data['name']
+
         return BomberPlayerValid(self.state, uid).render_GET(request)
 
     def getChild(self, uid, request):
@@ -146,8 +151,8 @@ class BomberPlayerValid(BomberResource):
 
     def render_GET(self, request):
         info = dict(uid=self.uid)
-        for stat in 'state', 'coords', 'number', 'flame',\
-                    'bomb', 'kills', 'deaths', 'suicides', 'name':
+        for stat in 'coords', 'number', 'flame', 'bomb',\
+                    'kills', 'deaths', 'suicides', 'name':
             info[stat] = getattr(self.player, stat)
 
         return json.dumps(info)

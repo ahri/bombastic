@@ -14,10 +14,14 @@ def state_command(base=BASE):
     rc = RestClientJson(base)
     print rc.get('state')
 
-def player_create_command(base=BASE):
+def player_create_command(name=None, base=BASE):
     """Create a player"""
     rc = RestClientJson(base)
-    print rc.post('player')
+    if name is not None:
+        data = dict(name=name)
+    else:
+        data = None
+    print rc.post('player', data)
 
 def player_detail_command(uid, base=BASE):
     rc = RestClientJson(base)
