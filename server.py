@@ -19,7 +19,7 @@ class Forbidden(resource.Resource):
 
     def render(self, request):
         request.setResponseCode(http.BAD_REQUEST)
-        return json.loads('Forbidden')
+        return json.dumps('Forbidden')
 
 class Invalid(resource.Resource):
 
@@ -29,7 +29,7 @@ class Invalid(resource.Resource):
 
     def render(self, request):
         request.setResponseCode(http.BAD_REQUEST)
-        return json.loads('Invalid')
+        return json.dumps('Invalid')
 
 class BomberResource(resource.Resource):
 
