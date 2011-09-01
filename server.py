@@ -159,9 +159,13 @@ class BomberPlayerValid(BomberResource):
 
     def render_PUT(self, request):
         data = json.loads(request.content.read())
+
         if 'action' in data:
-            action = getattr(Player, data['action'])
-            self.player.action_add(action)
+            try:
+                action = getattr(Player, data['action'])
+                self.state['game'].action_add(self.player, action)
+            except AttributeError:
+                pass
 
         if 'name' in data:
             self.player.name = data['name']
