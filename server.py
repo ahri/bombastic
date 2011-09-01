@@ -185,22 +185,7 @@ class BomberPlayerValid(BomberResource):
 #   clear screen between frames?
 #
 # client -1 (python)
-#   use python "cmd" library to improve the current client.py for ease-of-use
-#   cli commands:
-#       state
-#       admin UID
-#       player
-#
-#   cmd commands:
-#       admin
-#           state
-#           spawn
-#       player
-#           state
-#           create [name]
-#           name
-#           action ACTION
-#           remove
+#   admin needs to be able to list players
 #
 # client 2 (jquery)
 #   grab input
