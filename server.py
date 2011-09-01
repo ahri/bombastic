@@ -179,23 +179,28 @@ class BomberPlayerValid(BomberResource):
 # TODO:
 #
 # server
-#   generate unique identifiers for players
-#   game state (GET)
-#   admin (GET/PUT/DELETE)
-#       generate a uid for the admin
-#   player spawning needs to occur somehow(?)
-#   player create (POST)
-#   player action (PUT)
-#   redirect POST to player ID
-#   send Content-Type: text/json
 #   generate docs when calling without children (instead of just returning "This is a bomberman server")
 #
 # client 1 (python)
-#   use termio thingy
 #   clear screen between frames?
-#   display game state
-#   player create
-#   player action
+#
+# client -1 (python)
+#   use python "cmd" library to improve the current client.py for ease-of-use
+#   cli commands:
+#       state
+#       admin UID
+#       player
+#
+#   cmd commands:
+#       admin
+#           state
+#           spawn
+#       player
+#           state
+#           create [name]
+#           name
+#           action ACTION
+#           remove
 #
 # client 2 (jquery)
 #   grab input
