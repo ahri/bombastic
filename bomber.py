@@ -364,7 +364,7 @@ class GameState(object):
                 self._sticky_actions[player] = None
 
     def tick(self, count=1):
-        """Step to the next game state"""
+        """Step to the next game state: this is an example and is used for testing"""
         for _ in xrange(count):
             self._flames_process()
             self._actions_process()
