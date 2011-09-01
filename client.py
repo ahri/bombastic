@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import cmd
-from pycurlbrowser.rest_client import RestClientJson
+from pycurlbrowser.rest_client import RestClientJson, StatusClientError
 
 BASE = 'http://localhost:21513'
 
@@ -62,9 +62,8 @@ class AdminCmd(ExitCmd, StateCmd):
     def do_kick(self, s):
         try:
             print self.rc.delete('player', s)
-        except TypeError, e:
-            if e.res != 400:
-                raise
+        except StatusClientError:
+            pass
 
     def help_kick(self):
         print "Kick a player"
@@ -105,7 +104,7 @@ class PlayerCmd(ExitCmd, StateCmd):
     def do_exit(self, s):
         try:
             self.rc.delete('player', self.uid)
-        except TypeError:
+        except StatusClientError:
             pass
         return super(PlayerCmd, self).do_exit(s)
 
@@ -116,12 +115,9 @@ def admin_command(base=BASE):
     rc = RestClientJson(base)
     try:
         rc.get('admin', uid)
-    except TypeError, e:
-        if e.res == 400:
-            print "Invalid UID specified"
-            return
-        else:
-            raise
+    except StatusClientError:
+        print "Invalid UID specified"
+        return
 
     interpreter = AdminCmd(rc, uid)
     interpreter.cmdloop()
