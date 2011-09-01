@@ -47,17 +47,27 @@ class AdminCmd(ExitCmd, StateCmd):
         super(AdminCmd, self).__init__(rc)
         self.uid = uid
 
+    def do_status(self, s):
+        print self.rc.get('admin', self.uid)
+
+    def help_status(self):
+        print "Display game status"
+
     def do_spawn(self, s):
-        try:
-            print self.rc.put('admin', self.uid, dict(spawn=True))
-        except TypeError, e:
-            if e.res == 400:
-                print "Invalid UID specified"
-            else:
-                raise
+        print self.rc.put('admin', self.uid, dict(spawn=True))
 
     def help_spawn(self):
         print "Spawn players"
+
+    def do_kick(self, s):
+        try:
+            print self.rc.delete('player', s)
+        except TypeError, e:
+            if e.res != 400:
+                raise
+
+    def help_kick(self):
+        print "Kick a player"
 
 class PlayerCmd(ExitCmd, StateCmd):
     uid = None
@@ -101,8 +111,19 @@ class PlayerCmd(ExitCmd, StateCmd):
 
     do_EOF = do_exit
 
-def admin_command(uid, base=BASE):
-    interpreter = AdminCmd(RestClientJson(base), uid)
+def admin_command(base=BASE):
+    uid = raw_input("UID: ")
+    rc = RestClientJson(base)
+    try:
+        rc.get('admin', uid)
+    except TypeError, e:
+        if e.res == 400:
+            print "Invalid UID specified"
+            return
+        else:
+            raise
+
+    interpreter = AdminCmd(rc, uid)
     interpreter.cmdloop()
 
 def player_command(base=BASE):
