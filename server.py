@@ -8,7 +8,7 @@ import uuid
 from bomber import GameState, Player
 
 FLAME_TICK_TIME  = 1
-ACTION_TICK_TIME = 1
+ACTION_TICK_TIME = 0.25
 BOMB_TICK_TIME   = 1
 
 class Forbidden(resource.Resource):
