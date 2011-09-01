@@ -700,3 +700,12 @@ class TestGameState:
         state.tick()
         state.action_add(p1, Player.DOWN)
         state.tick()
+
+    def test_player_removal(self):
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        coords = p1.coords
+        state.player_remove(p1)
+        assert not state.arena.coords_have_class(coords, Player)

@@ -342,6 +342,10 @@ class GameState(object):
         """Add a player to the game state"""
         self._player_queue.appendleft(player)
 
+    def player_remove(self, player):
+        """Remove a player from the game state"""
+        player.remove()
+
     def spawn(self):
         """Spawn the players into the arena"""
         p_no = 0
