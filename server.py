@@ -74,7 +74,7 @@ class BomberAdmin(BomberResource):
     """
 
     def render_GET(self, request):
-        return "Supply the admin UID"
+        return json.dumps("Supply the admin UID")
 
     def getChild(self, uid, request):
         if uid != self.state['admin_uid']:
