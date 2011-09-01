@@ -4,13 +4,10 @@ from pycurlbrowser.rest_client import RestClientJson
 
 BASE = 'http://localhost:21513'
 
-def admin_command(uid, base=BASE):
-    """Get/set admin variables"""
+def admin_spawn_command(uid, base=BASE):
+    """Spawn players"""
     rc = RestClientJson(base)
-    try:
-        print rc.get('admin', uid)
-    except AssertionError:
-        print 'Incorrect UID'
+    print rc.put('admin', uid, dict(spawn=True))
 
 def state_command(base=BASE):
     """Print the current state of the server"""

@@ -92,7 +92,12 @@ class BomberAdminValid(BomberResource):
         return json.dumps("admin!")
 
     def render_PUT(self, request):
-        pass
+        data = json.loads(request.content.read())
+
+        if 'spawn' in data:
+            self.state['game'].spawn()
+
+        return self.render_GET(request)
 
     def getChild(self, uid, request):
         return self
