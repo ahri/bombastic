@@ -36,6 +36,11 @@ def player_name_command(uid, name, base=BASE):
     rc = RestClientJson(base)
     print rc.put('player', uid, dict(name=name))
 
+def player_remove_command(uid, base=BASE):
+    """Remove a player from the game"""
+    rc = RestClientJson(base)
+    print rc.delete('player', uid)
+
 if __name__ == '__main__':
     import scriptine
     scriptine.run()

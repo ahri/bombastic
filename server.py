@@ -159,7 +159,8 @@ class BomberPlayerValid(BomberResource):
         return self.render_GET(request)
 
     def render_DELETE(self, request):
-        return json.dumps('TODO')
+        self.state['game'].player_remove(self.player)
+        return self.render_GET(request)
 
 # TODO:
 #
