@@ -709,3 +709,25 @@ class TestGameState:
         coords = p1.coords
         state.player_remove(p1)
         assert not state.arena.coords_have_class(coords, Player)
+
+    def test_player_pickup_flame(self):
+        state = GameState()
+        p1 = Player()
+        state.player_add(p1)
+        state.spawn()
+        coords = p1.coords
+        state.action_add(p1, Player.DOWN)
+        state.action_add(p1, Player.BOMB)
+        state.action_add(p1, Player.UP)
+        state.action_add(p1, Player.RIGHT)
+        state._actions_process()
+        state._actions_process()
+        state._actions_process()
+        state._actions_process()
+        state._bombs_process()
+        state._bombs_process()
+        state._bombs_process()
+        state._bombs_process()
+        state.action_add(p1, Player.LEFT)
+        state._actions_process()
+        assert not state.arena.coords_have_class(coords, Player)
