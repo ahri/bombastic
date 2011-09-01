@@ -181,7 +181,9 @@ class BomberPlayerValid(BomberResource):
         del self.state['players'][self.uid]
         try:
             self.state['game'].player_remove(self.player)
-        except KeyError:
+        except KeyError: # the game doesn't know about the player
+            pass
+        except AttributeError: # the player isn't in the game
             pass
 
         return self.render_GET(request)
