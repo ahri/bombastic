@@ -188,26 +188,6 @@ class BomberPlayerValid(BomberResource):
 
         return self.render_GET(request)
 
-# TODO:
-#
-# server
-#   generate docs when calling without children (instead of just returning "This is a bomberman server")
-#
-# client 1 (python)
-#   clear screen between frames?
-#
-# client -1 (python)
-#   admin needs to be able to list players
-#
-# client 2 (jquery)
-#   grab input
-#   output game state to table
-#
-# client 3 (jquery)
-#   output game state, with img lookup (simple dict)
-
-
-
 if __name__ == '__main__':
     admin_uid = uuid.uuid4().hex
     print "Admin uid:", admin_uid

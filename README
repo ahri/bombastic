@@ -3,24 +3,51 @@ Bomber will be:
         A bomberman clone
         Multi platform
         Event based
-        Multiplayer (local, network later)
+        Multiplayer
         Flexible as far as clients go
         A way for me to learn more python
         
 Status:
-        Turn based game engine working to Alpha level
+        Working RESTful server
+        Two example clients
 
 Plan:
-        Move to event-based
-        Move to time-based, bombs tick down over 3 seconds
-        GUI interface (Linux/Windows/Mac)
-        Networking (Client/Server)
-        Consider Stackless for Server
-        Console interface for POSIX (curses)
+        Game Engine
+            Some way to reset the game
+            Winning condition
 
-Potential library choices:
-        http://github.com/saucelabs/monocle
-        http://www.gevent.org/
+        Server
+            Generate docs when calling without children (instead of just returning "This is a bomberman server")
+
+        Client 0 (python) [COMPLETE]
+            Provides an admin and a player interface
+            Mostly available as a demo client
+            Allows for easy testing and example formulation of the server API
+
+        Client 1 (python) [COMPLETE]
+            Console; termios-based, naive and doesn't throttle requests
+
+        Client 2 (jquery)
+            Grab input
+            Output game state to table
+
+        Client 3 (jquery)
+            As client 2, but replace chars with images via dict lookup
+
+        Client 4 (python)
+            AI player
+
+        Client 5 (python/c)
+            Console interface for POSIX (curses)
+
+        Client 6
+            GUI interface (Linux/Windows/Mac)
+
+Libraries:
+        Twisted
+        pycurl
+        lxml
+        pycurlbrowser
 
 License:
         AGPLv3; as infectious an open source license as I know exists
