@@ -151,12 +151,16 @@ class Player(GameObject):
 
     def drop_bomb(self):
         """Drop a bomb on the current coords"""
-        if len(self._bombs_live) < self.bomb:
-            bomb = Bomb(self)
-            self._bombs_live.append(bomb)
-            return bomb
+        if self.state.arena.coords_have_class(self.coords, Bomb):
+            return None
 
-        return None
+        if len(self._bombs_live) >= self.bomb:
+            return None
+
+        bomb = Bomb(self)
+        self._bombs_live.append(bomb)
+        return bomb
+
 
     def flamed(self, flame):
         """What happens when a player catches fire? Depends whose fault it is..."""

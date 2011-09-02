@@ -731,3 +731,19 @@ class TestGameState:
         state.action_add(p1, Player.LEFT)
         state._actions_process()
         assert not state.arena.coords_have_class(coords, Player)
+
+    def test_player_drop_two_bombs(self):
+        state = GameState()
+        p1 = Player()
+        p1.bomb = 2
+        state.player_add(p1)
+        state.spawn()
+        coords = p1.coords
+        state.action_add(p1, Player.BOMB)
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        state.tick()
+        state.tick()
+        state.tick()
+        state.tick()
+        state.tick()
