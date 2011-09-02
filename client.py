@@ -31,6 +31,16 @@ class ExitCmd(cmd.Cmd, object):
     do_EOF = do_exit
     help_EOF = help_exit
 
+class DebugCmd(cmd.Cmd, object):
+    def do_debug(self, s):
+        if s == 'on':
+            self.rc.set_debug(True)
+        else:
+            self.rc.set_debug(False)
+
+    def help_debug(self):
+        print "Set debug 'on' or 'off'"
+
 class StateCmd(cmd.Cmd, object):
     def __init__(self, rc):
         super(StateCmd, self).__init__()
@@ -42,7 +52,7 @@ class StateCmd(cmd.Cmd, object):
     def help_state(self):
         print "Display game state"
 
-class AdminCmd(ExitCmd, StateCmd):
+class AdminCmd(ExitCmd, StateCmd, DebugCmd):
     def __init__(self, rc, uid):
         super(AdminCmd, self).__init__(rc)
         self.uid = uid
@@ -68,7 +78,7 @@ class AdminCmd(ExitCmd, StateCmd):
     def help_kick(self):
         print "Kick a player"
 
-class PlayerCmd(ExitCmd, StateCmd):
+class PlayerCmd(ExitCmd, StateCmd, DebugCmd):
     uid = None
 
     def do_create(self, s):
