@@ -28,6 +28,7 @@ Plan:
             Winning condition (which also resets the game)
 
         Server
+            Manhole ability on localhost http://www.devshed.com/c/a/Python/SSH-with-Twisted/3/
             Spawn voting (to remove need for admin)
             Generate docs when calling without children (instead of just returning "This is a bomberman server")
 
