@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from twisted.internet import reactor
-from twisted.web import server, resource, http, util
+from twisted.web import server, resource, http, util, static
 import simplejson as json
 from simplejson.decoder import JSONDecodeError
 import uuid
@@ -97,6 +97,8 @@ class ServerRoot(BomberResource):
             return BomberState(self.state, data)
         if name == 'player':
             return BomberPlayer(self.state, data)
+        if name == 'client2':
+            return server.Site(static.File('client2'))
         return self
 
 class BomberAdmin(BomberResource):
