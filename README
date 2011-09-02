@@ -13,10 +13,22 @@ Status:
 
 Plan:
         Game Engine
+            make sure blanket removals (of a class) don't happen; remove each object individually
+            flame vt/hz/combo subtypes (x-over can be determined by flaming another flame)
+
+                ^         ↑
+                | ^       | ↑
+              <-+-+-->  ←-+-+--→
+                | v       | ↓
+                v         ↓
+
+                ascii vs. unicode...
+
             Some way to reset the game
-            Winning condition
+            Winning condition (which also resets the game)
 
         Server
+            Spawn voting (to remove need for admin)
             Generate docs when calling without children (instead of just returning "This is a bomberman server")
 
         Client 0 (python) [COMPLETE]
@@ -27,12 +39,13 @@ Plan:
         Client 1 (python) [COMPLETE]
             Console; termios-based, naive and doesn't throttle requests
 
-        Client 2 (jquery)
+        Client 2 (jquery) [COMPLETE]
             Grab input
-            Output game state to table
+            Output game state to <pre>
 
         Client 3 (jquery)
-            As client 2, but replace chars with images via dict lookup
+            As client 2, but replace chars with table of images via dict lookup
+            flame vt/hz/combo recognition
 
         Client 4 (python)
             AI player
