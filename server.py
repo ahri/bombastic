@@ -4,6 +4,7 @@
 from twisted.internet import reactor
 from twisted.web import server, resource, http, util
 import simplejson as json
+from simplejson.decoder import JSONDecodeError
 import uuid
 from bomber import GameState, Player
 
@@ -11,25 +12,46 @@ FLAME_TICK_TIME  = 1
 ACTION_TICK_TIME = 0.25
 BOMB_TICK_TIME   = 1
 
-class Forbidden(resource.Resource):
+class ClientError(resource.Resource):
+
+    """
+    Provide useful information to client
+    """
+
+    def __init__(self, received):
+        resource.Resource.__init__(self)
+        self.received = received
+
+    def provide_message(self, request, message):
+        request.setResponseCode(http.BAD_REQUEST)
+        return json.dumps(dict(message=message, received=self.received))
+
+class Forbidden(ClientError):
 
     """
     Forbidden page
     """
 
     def render(self, request):
-        request.setResponseCode(http.BAD_REQUEST)
-        return json.dumps('Forbidden')
+        return self.provide_message(request, 'Forbidden')
 
-class Invalid(resource.Resource):
+class Invalid(ClientError):
 
     """
     Invalid page
     """
 
     def render(self, request):
-        request.setResponseCode(http.BAD_REQUEST)
-        return json.dumps('Invalid')
+        return self.provide_message(request, "Invalid")
+
+class ExpectedJson(ClientError):
+
+    """
+    We expected JSON and didn't get any
+    """
+
+    def render(self, request):
+        return self.provide_message(request, "Expected JSON")
 
 class BomberResource(resource.Resource):
 
@@ -37,7 +59,7 @@ class BomberResource(resource.Resource):
     An HTTP resource that is game-state and player aware
     """
 
-    def __init__(self, state):
+    def __init__(self, state, data):
         resource.Resource.__init__(self)
 
         for req_key in 'game', 'admin_uid':
@@ -48,6 +70,7 @@ class BomberResource(resource.Resource):
             state['players'] = {}
 
         self.state = state
+        self.data = data
 
 class ServerRoot(BomberResource):
 
@@ -59,12 +82,21 @@ class ServerRoot(BomberResource):
         return 'This is a bomberman server'
 
     def getChild(self, name, request):
+        data = request.content.read()
+        if len(data) == 0:
+            data = None
+        else:
+            try:
+                data = json.loads(data)
+            except JSONDecodeError:
+                return ExpectedJson(data)
+
         if name == 'admin':
-            return BomberAdmin(self.state)
+            return BomberAdmin(self.state, data)
         if name == 'state':
-            return BomberState(self.state)
+            return BomberState(self.state, data)
         if name == 'player':
-            return BomberPlayer(self.state)
+            return BomberPlayer(self.state, data)
         return self
 
 class BomberAdmin(BomberResource):
@@ -78,9 +110,9 @@ class BomberAdmin(BomberResource):
 
     def getChild(self, uid, request):
         if uid != self.state['admin_uid']:
-            return Forbidden()
+            return Forbidden(self.data)
 
-        return BomberAdminValid(self.state)
+        return BomberAdminValid(self.state, self.data)
 
 class BomberAdminValid(BomberResource):
 
@@ -97,9 +129,7 @@ class BomberAdminValid(BomberResource):
                             uid, player in self.state['players'].items()])
 
     def render_PUT(self, request):
-        data = json.loads(request.content.read())
-
-        if 'spawn' in data:
+        if 'spawn' in self.data:
             self.state['game'].spawn()
 
         return self.render_GET(request)
@@ -115,6 +145,7 @@ class BomberState(BomberResource):
     """
 
     def render_GET(self, request):
+        #request.setHeader('Content-Type', 'text/json')
         return json.dumps(str(self.state['game']))
 
 class BomberPlayer(BomberResource):
@@ -131,17 +162,16 @@ class BomberPlayer(BomberResource):
         self.state['players'][uid] = p
         self.state['game'].player_add(p)
 
-        data = json.loads(request.content.read())
-        if data is not None and 'name' in data:
-            p.name = data['name']
+        if self.data is not None and 'name' in self.data:
+            p.name = self.data['name']
 
-        return BomberPlayerValid(self.state, uid).render_GET(request)
+        return BomberPlayerValid(self.state, self.data, uid).render_GET(request)
 
     def getChild(self, uid, request):
         if uid not in self.state['players']:
-            return Invalid()
+            return Invalid(self.data)
 
-        return BomberPlayerValid(self.state, uid)
+        return BomberPlayerValid(self.state, self.data, uid)
 
 class BomberPlayerValid(BomberResource):
 
@@ -149,8 +179,8 @@ class BomberPlayerValid(BomberResource):
     Handle /player/UID
     """
 
-    def __init__(self, state, uid, *args, **kwargs):
-        BomberResource.__init__(self, state, *args, **kwargs)
+    def __init__(self, state, data, uid, *args, **kwargs):
+        BomberResource.__init__(self, state, data, *args, **kwargs)
         self.uid = uid
         self.player = self.state['players'][uid]
 
@@ -163,17 +193,15 @@ class BomberPlayerValid(BomberResource):
         return json.dumps(info)
 
     def render_PUT(self, request):
-        data = json.loads(request.content.read())
-
-        if 'action' in data:
+        if 'action' in self.data:
             try:
-                action = getattr(Player, data['action'])
+                action = getattr(Player, self.data['action'])
                 self.state['game'].action_add(self.player, action)
             except AttributeError:
                 pass
 
-        if 'name' in data:
-            self.player.name = data['name']
+        if 'name' in self.data:
+            self.player.name = self.data['name']
 
         return self.render_GET(request)
 
@@ -189,8 +217,13 @@ class BomberPlayerValid(BomberResource):
         return self.render_GET(request)
 
 if __name__ == '__main__':
+    listen = raw_input('hostname:port to listen on? defaults to localhost:21513 : ')
+    try:
+        hostname, port = listen.split(':')
+    except ValueError:
+        hostname, port = 'localhost', 21513
+
     admin_uid = uuid.uuid4().hex
-    print "Admin uid:", admin_uid
 
     state = GameState()
 
@@ -206,10 +239,15 @@ if __name__ == '__main__':
         state._bombs_process()
         reactor.callLater(BOMB_TICK_TIME, tick_bombs)
 
-    reactor.listenTCP(21513, server.Site(ServerRoot(dict(game=state, admin_uid=admin_uid))))
+    reactor.listenTCP(factory=server.Site(ServerRoot(dict(game=state, admin_uid=admin_uid), None)),
+                      interface=hostname,
+                      port=port)
 
     reactor.callWhenRunning(tick_flames)
     reactor.callWhenRunning(tick_actions)
     reactor.callWhenRunning(tick_bombs)
+
+    print "Listening on: http://%s:%d" % (hostname, port)
+    print "Admin uid:", admin_uid
 
     reactor.run()
