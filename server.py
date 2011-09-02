@@ -12,14 +12,14 @@ FLAME_TICK_TIME  = 1
 ACTION_TICK_TIME = 0.25
 BOMB_TICK_TIME   = 1
 
-class ClientError(resource.Resource):
+class ClientError(resource.Resource, object):
 
     """
     Provide useful information to client
     """
 
     def __init__(self, received):
-        resource.Resource.__init__(self)
+        super(ClientError, self).__init__()
         self.received = received
 
     def provide_message(self, request, message):
@@ -53,14 +53,14 @@ class ExpectedJson(ClientError):
     def render(self, request):
         return self.provide_message(request, "Expected JSON")
 
-class BomberResource(resource.Resource):
+class BomberResource(resource.Resource, object):
 
     """
     An HTTP resource that is game-state and player aware
     """
 
     def __init__(self, state, data):
-        resource.Resource.__init__(self)
+        super(BomberResource, self).__init__()
 
         for req_key in 'game', 'admin_uid':
             if req_key not in state:
@@ -181,8 +181,8 @@ class BomberPlayerValid(BomberResource):
     Handle /player/UID
     """
 
-    def __init__(self, state, data, uid, *args, **kwargs):
-        BomberResource.__init__(self, state, data, *args, **kwargs)
+    def __init__(self, state, data, uid):
+        super(BomberPlayerValid, self).__init__(state, data)
         self.uid = uid
         self.player = self.state['players'][uid]
 
