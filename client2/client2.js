@@ -1,7 +1,10 @@
-function state_update() {
-    $.read('/state', function(resp) {
-        $('#state').text(resp);
-    });
+function state_update(uid) {
+    // refresh loop
+    setInterval(function() {
+        $.read('/player/' + uid, function(resp) {
+            $('#state').text(resp.state);
+        });
+    }, 100);
 }
 
 function keys_register(uid) {
@@ -28,14 +31,10 @@ function keys_register(uid) {
 function player_create() {
     $.create('/player', JSON.stringify({'name': 'js'}), function(resp) {
         keys_register(resp.uid);
+        state_update(resp.uid);
     });
 }
 
 $(function() {
     player_create();
-
-    // refresh loop
-    setInterval(function() {
-        state_update();
-    }, 100);
 });

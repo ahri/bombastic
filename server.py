@@ -187,7 +187,7 @@ class BomberPlayerValid(BomberResource):
         self.player = self.state['players'][uid]
 
     def render_GET(self, request):
-        info = dict(uid=self.uid)
+        info = dict(uid=self.uid, state=str(self.state['game']))
         for stat in 'coords', 'number', 'flame', 'bomb',\
                     'kills', 'deaths', 'suicides', 'name':
             info[stat] = getattr(self.player, stat)
