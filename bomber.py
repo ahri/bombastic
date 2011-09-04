@@ -221,7 +221,7 @@ class Bomb(GameObject):
     def explode(self):
         """Probably the most important method in the game"""
         self.remove()
-        self.state.flame_add(self, self.coords)
+        self.state.flame_add(self, self.coords, FlameCross)
         self.incinerate(self.coords, (0, -1), self.flame)
         self.incinerate(self.coords, (0, +1), self.flame)
         self.incinerate(self.coords, (-1, 0), self.flame)
@@ -241,7 +241,21 @@ class Bomb(GameObject):
         # keep note if we have a DestructibleBlock, as it'll removed itself before we check on it
         destructible = self.state.arena.coords_have_class(coords, DestructibleBlock)
 
-        self.state.flame_add(self, coords)
+        if flame > 1 and not destructible:
+            if coord_mod == (0, -1) or coord_mod == (0, +1):
+                self.state.flame_add(self, coords, FlameVt)
+            if coord_mod == (-1, 0) or coord_mod == (+1, 0):
+                self.state.flame_add(self, coords, FlameHz)
+        else:
+            if coord_mod == (0, -1):
+                self.state.flame_add(self, coords, FlameEndUp)
+            if coord_mod == (0, +1):
+                self.state.flame_add(self, coords, FlameEndDown)
+            if coord_mod == (-1, 0):
+                self.state.flame_add(self, coords, FlameEndLeft)
+            if coord_mod == (+1, 0):
+                self.state.flame_add(self, coords, FlameEndRight)
+
         if destructible:
             return
 
@@ -279,6 +293,12 @@ class Flame(GameObject):
         self.remove()
 
     def flamed(self, flame):
+        """Turn into a FlameCross"""
+        flame.remove()
+        if (self.__class__ == FlameHz and flame.__class__ == FlameVt) or \
+           (self.__class__ == FlameHz and flame.__class__ == FlameVt):
+            self.remove()
+            self.state.flame_add(self.bomb, self.coords, FlameCross)
 
     def picked_up(self, player):
         """What to do when a player picks us up?; flame 'em"""
@@ -475,9 +495,9 @@ class GameState(object):
 
                 b.tick()
 
-    def flame_add(self, bomb, coords):
+    def flame_add(self, bomb, coords, cls):
         """Add and track some flame"""
-        self._flames.append(Flame(bomb, coords))
+        self._flames.append(cls(bomb, coords))
 
     def _flames_process(self):
         """Tick the flames and forget about them"""
