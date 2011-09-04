@@ -4,7 +4,6 @@
 from collections import deque
 from udeque import udeque
 from arena import Arena
-from time import sleep
 import os
 import random
 import codecs
