@@ -279,12 +279,52 @@ class Flame(GameObject):
         self.remove()
 
     def flamed(self, flame):
-        """Don't do anything when flamed"""
-        pass
 
     def picked_up(self, player):
         """What to do when a player picks us up?; flame 'em"""
         player.flamed(self)
+
+class FlameCross(Flame):
+
+    """Horizonal/Vertical flame"""
+
+    DEBUG_CHR = "+"
+
+class FlameHz(Flame):
+
+    """Horizonal flame"""
+
+    DEBUG_CHR = "-"
+
+class FlameVt(Flame):
+
+    """Vertical flame"""
+
+    DEBUG_CHR = "|"
+
+class FlameEndUp(Flame):
+
+    """Flame endpoint"""
+
+    DEBUG_CHR = "^"
+
+class FlameEndDown(Flame):
+
+    """Flame endpoint"""
+
+    DEBUG_CHR = "v"
+
+class FlameEndLeft(Flame):
+
+    """Flame endpoint"""
+
+    DEBUG_CHR = "<"
+
+class FlameEndRight(Flame):
+
+    """Flame endpoint"""
+
+    DEBUG_CHR = ">"
 
 class GameState(object):
 
