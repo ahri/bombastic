@@ -42,7 +42,7 @@ class Arena(object):
                 del self._get_list(coords)[i]
                 return o
 
-        raise LookupError("Did not find object")
+        raise LookupError("Did not find object %r at %s" % (obj, str(coords)))
 
     # TODO: maybe implement the "have" functions separately so we can use them when iterating, e.g. in GameState.spawn()
 

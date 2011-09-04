@@ -33,6 +33,9 @@ class GameObject(object):
         """Lots of game objects need to remove themselves, so it's centralised here"""
         self.state.arena.coords_remove(self.coords, self)
 
+    def __repr__(self):
+        return '<%s %s 0x%x>' % (self.__class__.__name__, str(self.coords), id(self))
+
 class Block(GameObject):
 
     """The indestructible block"""
