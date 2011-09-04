@@ -271,6 +271,9 @@ class Bomb(GameObject):
         self.player = flame.bomb.player
         self.explode()
 
+    def remove(self):
+        self.player._bombs_live.remove(self)
+        super(Bomb, self).remove()
 
 class Flame(GameObject):
 
@@ -303,6 +306,10 @@ class Flame(GameObject):
     def picked_up(self, player):
         """What to do when a player picks us up?; flame 'em"""
         player.flamed(self)
+
+    def remove(self):
+        self.state._flames.remove(self)
+        super(Flame, self).remove()
 
 class FlameCross(Flame):
 
