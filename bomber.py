@@ -160,7 +160,6 @@ class Player(GameObject):
             return None
 
         bomb = Bomb(self)
-        self._bombs_live.append(bomb)
         return bomb
 
 
@@ -204,7 +203,9 @@ class Bomb(GameObject):
 
     def __init__(self, player):
         """Set up some defaults and references"""
+        player._bombs_live.append(self)
         self.player = player
+        self.original_owner = player # exists for cases where the bomb changes owner, e.g. when flamed by another player
         self.flame = player.flame
         self.ticks_left = 4
         super(Bomb, self).__init__(player.state, player.coords)
@@ -221,7 +222,7 @@ class Bomb(GameObject):
     def explode(self):
         """Probably the most important method in the game"""
         self.remove()
-        self.state.flame_add(self, self.coords, FlameCross)
+        FlameCross(self, self.coords)
         self.incinerate(self.coords, (0, -1), self.flame)
         self.incinerate(self.coords, (0, +1), self.flame)
         self.incinerate(self.coords, (-1, 0), self.flame)
@@ -243,18 +244,18 @@ class Bomb(GameObject):
 
         if flame > 1 and not destructible:
             if coord_mod == (0, -1) or coord_mod == (0, +1):
-                self.state.flame_add(self, coords, FlameVt)
+                FlameVt(self, coords)
             if coord_mod == (-1, 0) or coord_mod == (+1, 0):
-                self.state.flame_add(self, coords, FlameHz)
+                FlameHz(self, coords)
         else:
             if coord_mod == (0, -1):
-                self.state.flame_add(self, coords, FlameEndUp)
+                FlameEndUp(self, coords)
             if coord_mod == (0, +1):
-                self.state.flame_add(self, coords, FlameEndDown)
+                FlameEndDown(self, coords)
             if coord_mod == (-1, 0):
-                self.state.flame_add(self, coords, FlameEndLeft)
+                FlameEndLeft(self, coords)
             if coord_mod == (+1, 0):
-                self.state.flame_add(self, coords, FlameEndRight)
+                FlameEndRight(self, coords)
 
         if destructible:
             return
@@ -272,7 +273,7 @@ class Bomb(GameObject):
         self.explode()
 
     def remove(self):
-        self.player._bombs_live.remove(self)
+        self.original_owner._bombs_live.remove(self)
         super(Bomb, self).remove()
 
 class Flame(GameObject):
@@ -287,6 +288,8 @@ class Flame(GameObject):
         self.bomb = bomb
         super(Flame, self).__init__(bomb.state, coords)
 
+        self.state._flames.append(self)
+
         for o in self.state.arena.coords_get(coords):
             if o != self:
                 o.flamed(self)
@@ -299,9 +302,9 @@ class Flame(GameObject):
         """Turn into a FlameCross"""
         flame.remove()
         if (self.__class__ == FlameHz and flame.__class__ == FlameVt) or \
-           (self.__class__ == FlameHz and flame.__class__ == FlameVt):
+           (self.__class__ == FlameVt and flame.__class__ == FlameHz):
+            FlameCross(self.bomb, self.coords)
             self.remove()
-            self.state.flame_add(self.bomb, self.coords, FlameCross)
 
     def picked_up(self, player):
         """What to do when a player picks us up?; flame 'em"""
@@ -495,20 +498,11 @@ class GameState(object):
     def _bombs_process(self):
         """Tick bombs and forget about them when their timers run out"""
         for p in self._sticky_actions:
-            for i, b in enumerate(p._bombs_live):
-                if b.ticks_left == 0:
-                    del p._bombs_live[i]
-                    continue
-
+            for b in p._bombs_live[:]:
                 b.tick()
-
-    def flame_add(self, bomb, coords, cls):
-        """Add and track some flame"""
-        self._flames.append(cls(bomb, coords))
 
     def _flames_process(self):
         """Tick the flames and forget about them"""
-        for i, f in enumerate(self._flames):
+        # copy the list so we don't get confused
+        for f in self._flames[:]:
             f.tick()
-
-        self._flames = []
