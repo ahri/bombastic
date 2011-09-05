@@ -1,8 +1,8 @@
-function state_update(uid) {
+function game_update(uid) {
     // refresh loop
     setInterval(function() {
         $.read('/player/' + uid, function(resp) {
-            $('#state').text(resp.state);
+            $('#game').text(resp.state);
         });
     }, 100);
 }
@@ -31,7 +31,7 @@ function keys_register(uid) {
 function player_create() {
     $.create('/player', JSON.stringify({'name': 'js'}), function(resp) {
         keys_register(resp.uid);
-        state_update(resp.uid);
+        game_update(resp.uid);
     });
 }
 

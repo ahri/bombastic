@@ -145,7 +145,7 @@ class BomberAdminValid(BomberResource):
 class BomberState(BomberResource):
 
     """
-    Handle /state
+    Handle /game
     """
 
     def render_GET(self, request):
@@ -189,7 +189,7 @@ class BomberPlayerValid(BomberResource):
         self.player = self.state['players'][uid]
 
     def render_GET(self, request):
-        info = dict(uid=self.uid, state=str(self.state['game']))
+        info = dict(uid=self.uid, game=str(self.state['game']))
         for stat in 'coords', 'number', 'flame', 'bomb',\
                     'kills', 'deaths', 'suicides', 'name':
             info[stat] = getattr(self.player, stat)
@@ -229,21 +229,21 @@ if __name__ == '__main__':
 
     admin_uid = uuid.uuid4().hex
 
-    state = GameState()
+    game = GameState()
 
     def tick_flames():
-        state._flames_process()
+        game._flames_process()
         reactor.callLater(FLAME_TICK_TIME, tick_flames)
 
     def tick_actions():
-        state._actions_process()
+        game._actions_process()
         reactor.callLater(ACTION_TICK_TIME, tick_actions)
 
     def tick_bombs():
-        state._bombs_process()
+        game._bombs_process()
         reactor.callLater(BOMB_TICK_TIME, tick_bombs)
 
-    reactor.listenTCP(factory=server.Site(ServerRoot(dict(game=state, admin_uid=admin_uid), None)),
+    reactor.listenTCP(factory=server.Site(ServerRoot(dict(game=game, admin_uid=admin_uid), None)),
                       interface=hostname,
                       port=port)
 

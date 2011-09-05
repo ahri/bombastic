@@ -44,13 +44,13 @@ function keys_register(uid) {
 function player_create() {
     $.create('/player', JSON.stringify({'name': 'js'}), function(resp) {
         keys_register(resp.uid);
-        state_update(resp.uid);
+        game_update(resp.uid);
     });
 }
 
 function build_table() {
-    $.read('/state', function(resp) {
-        var table = document.getElementById('state'),
+    $.read('/game', function(resp) {
+        var table = document.getElementById('game'),
             table_row = document.createElement('tr'),
             table_cell,
             img;
@@ -72,14 +72,14 @@ function build_table() {
     });
 }
 
-function state_update(uid) {
+function game_update(uid) {
     // refresh loop
     /*setInterval(function() {
-        var last_state;
+        var last_game;
         $.read('/player/' + uid, function(resp) {
-            for (i = 0; i < resp.state.length; i++) {
-                var c  = resp.state.charAt(i);
-                var cl = last_state.charAt(i);
+            for (i = 0; i < resp.game.length; i++) {
+                var c  = resp.game.charAt(i);
+                var cl = last_game.charAt(i);
 
                 if (c == "\n") {
                     alert('newline');
@@ -90,7 +90,7 @@ function state_update(uid) {
                     lookup_refs[i].setAttribute('src', lookup_prefix + lookup[c]);
                 }
             }
-            last_state = resp.state;
+            last_game = resp.game;
         });
     }, 100);*/
 }

@@ -5,10 +5,10 @@ from pycurlbrowser.rest_client import RestClientJson, StatusClientError
 
 BASE = 'http://localhost:21513'
 
-def state_command(base=BASE):
-    """Print the current state of the server"""
+def game_command(base=BASE):
+    """Print the current game-state of the server"""
     rc = RestClientJson(base)
-    print rc.get('state')
+    print rc.get('game')
 
 class ExitCmd(cmd.Cmd, object):
     def can_exit(self):
@@ -46,10 +46,10 @@ class StateCmd(cmd.Cmd, object):
         super(StateCmd, self).__init__()
         self.rc = rc
 
-    def do_state(self, s):
-        print self.rc.get('state')
+    def do_game(self, s):
+        print self.rc.get('game')
 
-    def help_state(self):
+    def help_game(self):
         print "Display game state"
 
 class AdminCmd(ExitCmd, StateCmd, DebugCmd):
