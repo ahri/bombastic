@@ -20,7 +20,7 @@ def game_loop(rc, uid):
 
         while 1:
             detail = rc.get('player', uid)
-            print rc.get('state')
+            print detail['game']
             print 'Player: %d | Bombs: %d | Flames: %d' % (detail['number'] or 0, detail['bomb'], detail['flame'])
 
             if is_data():
@@ -51,6 +51,10 @@ if __name__ == '__main__':
         server = BASE
 
     name = raw_input("Name: ")
+    if len(name) > 0:
+        data = dict(name=name)
+    else:
+        data = None
     rc = RestClientJson(server)
-    detail = rc.post('player', name)
+    detail = rc.post('player', data)
     game_loop(rc, detail['uid'])

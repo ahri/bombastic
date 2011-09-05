@@ -93,7 +93,7 @@ class ServerRoot(BomberResource):
 
         if name == 'admin':
             return BomberAdmin(self.state, data)
-        if name == 'state':
+        if name == 'game':
             return BomberState(self.state, data)
         if name == 'player':
             return BomberPlayer(self.state, data)
