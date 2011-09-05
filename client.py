@@ -112,10 +112,11 @@ class PlayerCmd(ExitCmd, StateCmd, DebugCmd):
         print "Execute an action"
 
     def do_exit(self, s):
-        try:
-            self.rc.delete('player', self.uid)
-        except StatusClientError:
-            pass
+        if self.uid is not None:
+            try:
+                self.rc.delete('player', self.uid)
+            except StatusClientError:
+                pass
         return super(PlayerCmd, self).do_exit(s)
 
     do_EOF = do_exit
