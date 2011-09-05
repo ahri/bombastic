@@ -99,6 +99,8 @@ class ServerRoot(BomberResource):
             return BomberPlayer(self.state, data)
         if name == 'client2':
             return server.Site(static.File('client2'))
+        if name == 'client3':
+            return server.Site(static.File('client3'))
         return self
 
 class BomberAdmin(BomberResource):
