@@ -79,7 +79,9 @@ class AdminCmd(ExitCmd, StateCmd, DebugCmd):
         print "Kick a player"
 
 class PlayerCmd(ExitCmd, StateCmd, DebugCmd):
-    uid = None
+    def __init__(self):
+        super(PlayerCmd, self).__init__()
+        self.uid = None
 
     def do_create(self, s):
         if len(s) > 0:
