@@ -44,7 +44,7 @@ Plan:
             Grab input
             Output game state to <pre>
 
-        Client 3 (jquery)
+        Client 3 (jquery) [COMPLETE]
             As client 2, but replace chars with table of images via dict lookup
             flame vt/hz/combo recognition
 
