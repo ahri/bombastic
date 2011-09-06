@@ -224,6 +224,7 @@ if __name__ == '__main__':
     listen = raw_input('hostname:port to listen on? defaults to localhost:21513 : ')
     try:
         hostname, port = listen.split(':')
+        port = int(port)
     except ValueError:
         hostname, port = 'localhost', 21513
 
