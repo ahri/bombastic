@@ -384,9 +384,7 @@ class GameState(object):
             for line in fp:
                 lines.append(line.rstrip())
 
-        self.arena = Arena(reduce(lambda a, b: max(a, b),
-                                  map(lambda line: len(line), lines)),
-                           len(lines))
+        self.arena = Arena(max((len(line) for line in lines)), len(lines))
 
         for row, line in enumerate(lines):
             for col, char in enumerate(line):
@@ -404,11 +402,8 @@ class GameState(object):
                 chars.append('\n')
                 old_y = y
 
-            chars.append(str(reduce(
-                lambda a, b: a.ZINDEX > b.ZINDEX and a or b,
-                l,
-                GameObject(state=None, coords=None)
-            )))
+            chars.append(str(max(l + [GameObject(state=None, coords=None)],
+                                 key=lambda o: o.ZINDEX)))
 
         chars.append('\n')
 
