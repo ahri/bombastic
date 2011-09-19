@@ -231,6 +231,9 @@ if __name__ == '__main__':
     admin_uid = uuid.uuid4().hex
 
     game = GameState()
+    game._debug = True
+
+    from pprint import pprint
 
     def tick_flames():
         game._flames_process()
@@ -241,7 +244,13 @@ if __name__ == '__main__':
         reactor.callLater(ACTION_TICK_TIME, tick_actions)
 
     def tick_bombs():
-        game._bombs_process()
+        try:
+            game._bombs_process()
+        except Exception as e:
+            if game._debug is not False:
+                with open('bombs.trace', 'w') as tracefile:
+                    pprint(game._debug, tracefile)
+            raise
         reactor.callLater(BOMB_TICK_TIME, tick_bombs)
 
     reactor.listenTCP(factory=server.Site(ServerRoot(dict(game=game, admin_uid=admin_uid), None)),

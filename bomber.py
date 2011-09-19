@@ -362,6 +362,7 @@ class GameState(object):
 
     def __init__(self):
         "Simple init of variables"
+        self._debug = False
         self._player_queue = udeque()
         self._sticky_actions = {}
         self._action_queue = deque()
@@ -375,6 +376,22 @@ class GameState(object):
         self._flames = []
 
         self.arena_load(["arenas", "default.bmm"])
+
+    def track_debug(self):
+        if self._debug == False:
+            return
+
+        if type(self._debug) is not deque:
+            self._debug = deque()
+
+        self._debug.append(dict(state=str(self),
+                                player_queue=self._player_queue,
+                                sticky_actions=self._sticky_actions,
+                                action_queue=self._action_queue,
+                                flames=self._flames))
+
+        while len(self._debug) > 10:
+            self._debug.popleft()
 
     def arena_load(self, filename_list):
         """Load an arena from a file"""
@@ -447,6 +464,7 @@ class GameState(object):
 
     def _actions_process(self):
         """Process queued actions or fall back to sticky actions"""
+        self.track_debug()
         unexecuted = deque()
         had_turn = []
         while self._action_queue:
@@ -463,6 +481,7 @@ class GameState(object):
                 self._player_action(player, self._sticky_actions[player])
 
         self._action_queue = unexecuted
+        self.track_debug()
 
     def _player_action(self, player, action):
         """Perform player action"""
@@ -492,12 +511,16 @@ class GameState(object):
 
     def _bombs_process(self):
         """Tick bombs and forget about them when their timers run out"""
+        self.track_debug()
         for p in self._sticky_actions:
             for b in p._bombs_live[:]:
                 b.tick()
+        self.track_debug()
 
     def _flames_process(self):
         """Tick the flames and forget about them"""
+        self.track_debug()
         # copy the list so we don't get confused
         for f in self._flames[:]:
             f.tick()
+        self.track_debug()
