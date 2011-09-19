@@ -6,7 +6,7 @@ function Game() {
         lookup = {
             ' ': 'tile.png',
             'S': 'tile.png',
-            'B': 'block.png',
+            'B': ['block_dome.png', 'block_plain.png', 'block.png', 'block_striped.png', 'block_vents.png'],
             'x': 'bomb.png',
             '.': 'destructible.png',
             '+': 'flame_cross.png',
