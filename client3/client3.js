@@ -24,6 +24,16 @@ function Game() {
             'f': 'powerup_flame.png',
         };
 
+    var get_img_for = function (c) {
+        img = lookup[c];
+        if ($.isArray(img)) {
+            // pick a random image
+            img = img[Math.floor(Math.random() * img.length)];
+        }
+
+        return img;
+    }
+
     var player_create = function () {
         $.create('/player', JSON.stringify({'name': 'js'}), function(resp) {
             uid = resp.uid;
@@ -70,7 +80,7 @@ function Game() {
                 table_cell = document.createElement('td');
                 img        = document.createElement('img');
                 img_refs[i] = img;
-                img.setAttribute('src', lookup_prefix + lookup[c]);
+                img.setAttribute('src', lookup_prefix + get_img_for(c));
                 table_cell.appendChild(img);
                 table_row.appendChild(table_cell);
             }
@@ -87,7 +97,7 @@ function Game() {
                 var cl = last_frame.charAt(i);
 
                 if (c != cl) {
-                    img_refs[i].setAttribute('src', lookup_prefix + lookup[c]);
+                    img_refs[i].setAttribute('src', lookup_prefix + get_img_for(c));
                 }
             }
             last_frame = resp.game;
