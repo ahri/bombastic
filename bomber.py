@@ -493,11 +493,11 @@ class GameState(object):
     def _bombs_process(self):
         """Tick bombs"""
         for p in self._sticky_actions:
-            for b in p._bombs_live[:]:
-                b.tick()
+            for b in p._bombs_live[:]: # copy the list so we can safely iterate
+                if b in p._bombs_live:
+                    b.tick()
 
     def _flames_process(self):
         """Tick the flames"""
-        # copy the list so we don't get confused
-        for f in self._flames[:]:
+        for f in self._flames[:]: # copy the list so we can safely iterate
             f.tick()
