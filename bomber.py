@@ -299,12 +299,19 @@ class Flame(GameObject):
         self.remove()
 
     def flamed(self, flame):
-        """Turn into a FlameCross"""
+        """Turn into other type of flame"""
         flame.remove()
-        if (self.__class__ == FlameHz and flame.__class__ == FlameVt) or \
-           (self.__class__ == FlameVt and flame.__class__ == FlameHz):
-            FlameCross(self.bomb, self.coords)
-            self.remove()
+
+        if self.__class__ is flame.__class__ or self.__class__ is FlameCross:
+            return
+
+        self.remove()
+
+        self.combine(flame.__class__)(self.bomb, self.coords)
+
+    @classmethod
+    def combine(cls, flamecls):
+        return Flame
 
     def picked_up(self, player):
         """What to do when a player picks us up?; flame 'em"""
@@ -320,11 +327,22 @@ class FlameCross(Flame):
 
     DEBUG_CHR = "+"
 
+    @classmethod
+    def combine(cls, flamecls):
+        return FlameCross
+
 class FlameHz(Flame):
 
     """Horizonal flame"""
 
     DEBUG_CHR = "-"
+
+    @classmethod
+    def combine(cls, flamecls):
+        if flamecls in (FlameEndRight, FlameEndLeft):
+            return FlameHz
+        else:
+            return FlameCross
 
 class FlameVt(Flame):
 
@@ -332,11 +350,25 @@ class FlameVt(Flame):
 
     DEBUG_CHR = "|"
 
+    @classmethod
+    def combine(cls, flamecls):
+        if flamecls in (FlameEndUp, FlameEndDown):
+            return FlameVt
+        else:
+            return FlameCross
+
 class FlameEndUp(Flame):
 
     """Flame endpoint"""
 
     DEBUG_CHR = "^"
+
+    @classmethod
+    def combine(cls, flamecls):
+        if flamecls in (FlameVt, FlameEndDown):
+            return FlameVt
+        else:
+            return FlameCross
 
 class FlameEndDown(Flame):
 
@@ -344,17 +376,38 @@ class FlameEndDown(Flame):
 
     DEBUG_CHR = "v"
 
+    @classmethod
+    def combine(cls, flamecls):
+        if flamecls in (FlameVt, FlameEndUp):
+            return FlameVt
+        else:
+            return FlameCross
+
 class FlameEndLeft(Flame):
 
     """Flame endpoint"""
 
     DEBUG_CHR = "<"
 
+    @classmethod
+    def combine(cls, flamecls):
+        if flamecls in (FlameHz, FlameEndRight):
+            return FlameHz
+        else:
+            return FlameCross
+
 class FlameEndRight(Flame):
 
     """Flame endpoint"""
 
     DEBUG_CHR = ">"
+
+    @classmethod
+    def combine(cls, flamecls):
+        if flamecls in (FlameHz, FlameEndLeft):
+            return FlameHz
+        else:
+            return FlameCross
 
 class GameState(object):
 
