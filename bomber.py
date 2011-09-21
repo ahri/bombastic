@@ -491,13 +491,13 @@ class GameState(object):
             self._sticky_actions[player] = action
 
     def _bombs_process(self):
-        """Tick bombs and forget about them when their timers run out"""
+        """Tick bombs"""
         for p in self._sticky_actions:
             for b in p._bombs_live[:]:
                 b.tick()
 
     def _flames_process(self):
-        """Tick the flames and forget about them"""
+        """Tick the flames"""
         # copy the list so we don't get confused
         for f in self._flames[:]:
             f.tick()
