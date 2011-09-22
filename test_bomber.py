@@ -89,7 +89,7 @@ class TestArena(TestCase):
         self.assertRaises(IndexError, arena.sanity, (2, 4))
         self.assertRaises(IndexError, arena.sanity, (4, 3))
 
-class TestGameState:
+class TestGameState(TestCase):
 
     """Tests for Game class"""
 
@@ -147,6 +147,7 @@ class TestGameState:
     def test_actions_queue_sticky_movement(self):
         """Queue up actions and ensure that movement is sticky"""
         state = GameState()
+        state.arena_load(["arenas", "empty.bmm"])
         p1 = Player()
         state.player_add(p1)
         state.spawn()
@@ -159,13 +160,13 @@ class TestGameState:
         assert state._sticky_actions == {p1: Player.DOWN}
 
         state.action_add(p1, Player.UP)
-        state.action_add(p1, Player.LEFT)
+        state.action_add(p1, Player.RIGHT)
         state._actions_process()
         assert state._sticky_actions == {p1: Player.UP}
         state._actions_process()
-        assert state._sticky_actions == {p1: Player.LEFT}
+        assert state._sticky_actions == {p1: Player.RIGHT}
         state._actions_process()
-        assert state._sticky_actions == {p1: Player.LEFT}
+        assert state._sticky_actions == {p1: Player.RIGHT}
 
     def test_actions_bomb_non_sticky(self):
         """Queue a bomb action and ensure that it is not sticky"""
@@ -241,19 +242,19 @@ class TestGameState:
         assert state.arena.coords_have_obj((1, 1), p1)
 
         assert state.arena.coords_have_class((0, 0), Block)
-        assert not p1.move((0, 0))
+        self.assertRaises(IndexError, p1.move, ((0, 0)))
         assert not state.arena.coords_have_obj((0, 0), p1)
         assert state.arena.coords_have_obj((1, 1), p1)
 
         assert state.arena.coords_have_class((1, 3), DestructibleBlock)
-        assert not p1.move((1, 3))
+        self.assertRaises(IndexError, p1.move, ((1, 3)))
         assert not state.arena.coords_have_obj((1, 3), p1)
         assert state.arena.coords_have_obj((1, 1), p1)
 
         assert state.arena.coords_get((2, 1)) == []
         state.arena.coords_add((2, 1), Bomb(p1))
         assert state.arena.coords_have_class((2, 1), Bomb)
-        assert not p1.move((2, 1))
+        self.assertRaises(IndexError, p1.move, ((2, 2)))
         assert not state.arena.coords_have_obj((2, 1), p1)
         assert state.arena.coords_have_obj((1, 1), p1)
 
