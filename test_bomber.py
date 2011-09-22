@@ -831,3 +831,29 @@ class TestGameState:
         state.tick()
         state.tick()
         state.tick()
+
+    def test_sticky_movement(self):
+        state = GameState()
+        state.arena_load(["arenas", "empty.bmm"])
+        p1 = Player()
+        p1.bomb = 4
+        state.player_add(p1)
+        state.spawn()
+        x, y = p1.coords
+        DestructibleBlock(state, (x+1, y))
+        state.action_add(p1, Player.BOMB)
+        state.action_add(p1, Player.DOWN)
+        state.action_add(p1, Player.RIGHT)
+        state.action_add(p1, Player.RIGHT)
+        state.action_add(p1, Player.UP)
+        state.action_add(p1, Player.LEFT) # sticky
+        state._actions_process()
+        state._actions_process()
+        state._actions_process()
+        state.tick()
+        state.tick()
+        state.tick()
+        state.tick() # bomb explodes destroying block
+        coords = p1.coords
+        state._actions_process() # player moves?
+        assert coords == p1.coords
