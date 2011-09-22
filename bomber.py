@@ -178,7 +178,7 @@ class Player(GameObject):
         objs = []
         for o in self.state.arena.coords_get(new_coords):
             if isinstance(o, (Block, DestructibleBlock, Bomb)):
-                return False
+                raise IndexError("Can't move %r to %r" % (self, new_coords))
 
             objs.append(o)
 
@@ -187,8 +187,6 @@ class Player(GameObject):
         self.coords = new_coords
         for o in objs:
             o.picked_up(self)
-
-        return True
 
     def picked_up(self, player):
         """Picked up by another player? Nah"""
@@ -525,16 +523,19 @@ class GameState(object):
             # coords are invalid, player is not in the arena: noop
             return
 
-        if action == Player.BOMB:
-            player.drop_bomb()
-        elif action == Player.UP:
-            player.move((px, py-1))
-        elif action == Player.DOWN:
-            player.move((px, py+1))
-        elif action == Player.LEFT:
-            player.move((px-1, py))
-        elif action == Player.RIGHT:
-            player.move((px+1, py))
+        try:
+            if action == Player.BOMB:
+                player.drop_bomb()
+            elif action == Player.UP:
+                player.move((px, py-1))
+            elif action == Player.DOWN:
+                player.move((px, py+1))
+            elif action == Player.LEFT:
+                player.move((px-1, py))
+            elif action == Player.RIGHT:
+                player.move((px+1, py))
+        except IndexError:
+            self._sticky_actions[player] = None
 
     def _player_sticky(self, player, action):
         """Add actions to "sticky" lookup, if applicable"""
