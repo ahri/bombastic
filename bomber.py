@@ -33,7 +33,10 @@ class GameObject(object):
         self.state.arena.coords_remove(self.coords, self)
 
     def __repr__(self):
-        return '<%s %s 0x%x>' % (self.__class__.__name__, str(self.coords), id(self))
+        try:
+            return '<%s %s [%s] 0x%x>' % (self.__class__.__name__, self._more_repr(), str(self.coords), id(self))
+        except AttributeError:
+            return '<%s %s 0x%x>' % (self.__class__.__name__, str(self.coords), id(self))
 
 class Block(GameObject):
 
@@ -139,6 +142,9 @@ class Player(GameObject):
 
         self.name = 'Nameless'
 
+    def _more_repr(self):
+        return "#:%r, f:%r, b:%r" % (self.number, self.flame, self.bomb)
+
     def spawn(self, number, state, coords):
         """Do our (delayed) init"""
         self.number = number
@@ -161,7 +167,6 @@ class Player(GameObject):
 
         bomb = Bomb(self)
         return bomb
-
 
     def flamed(self, flame):
         """What happens when a player catches fire? Depends whose fault it is..."""
@@ -207,6 +212,9 @@ class Bomb(GameObject):
         self.flame = player.flame
         self.ticks_left = 4
         super(Bomb, self).__init__(player.state, player.coords)
+
+    def _more_repr(self):
+        return "op:%r, p:%r, f:%r, t:%r" % (self.original_owner, self.player, self.flame, self.ticks_left)
 
     def tick(self):
         """What to do when the game ticks; count down and explode"""
@@ -291,6 +299,9 @@ class Flame(GameObject):
         for o in self.state.arena.coords_get(coords):
             if o != self:
                 o.flamed(self)
+
+    def _more_repr(self):
+        return "b:%r" % (self.bomb)
 
     def tick(self):
         """What to do when the game ticks; remove self"""

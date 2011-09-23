@@ -7,6 +7,7 @@ import simplejson as json
 from simplejson.decoder import JSONDecodeError
 import uuid
 from bomber import GameState, Player
+from pprint import pprint
 
 FLAME_TICK_TIME  = 1
 ACTION_TICK_TIME = 0.25
@@ -232,16 +233,35 @@ if __name__ == '__main__':
 
     game = GameState()
 
+    def traceerr(f, *args, **kwargs):
+        last_state = str(game)
+        last_arena = game.arena.data[:]
+        try:
+            f(*args, **kwargs)
+        except Exception as e:
+            reactor.stop()
+            with file('trace.err', 'a') as tracefile:
+                tracefile.write("%r\n" % e)
+                tracefile.write("last_state =\n%s\n" % last_state)
+                tracefile.write("last_arena =\n")
+                pprint(last_arena, tracefile)
+                tracefile.write("\n")
+                tracefile.write("state =\n%s\n" % str(game))
+                tracefile.write("arena =\n")
+                pprint(game.arena.data, tracefile)
+                tracefile.write("\n\n\n")
+            raise
+
     def tick_flames():
-        game._flames_process()
+        traceerr(game._flames_process)
         reactor.callLater(FLAME_TICK_TIME, tick_flames)
 
     def tick_actions():
-        game._actions_process()
+        traceerr(game._actions_process)
         reactor.callLater(ACTION_TICK_TIME, tick_actions)
 
     def tick_bombs():
-        game._bombs_process()
+        traceerr(game._bombs_process)
         reactor.callLater(BOMB_TICK_TIME, tick_bombs)
 
     reactor.listenTCP(factory=server.Site(ServerRoot(dict(game=game, admin_uid=admin_uid), None)),
