@@ -37,6 +37,7 @@ function Game() {
     var player_create = function () {
         $.create('/player', JSON.stringify({'name': 'js'}), function(resp) {
             uid = resp.uid;
+            window.location.replace(window.location.href + '?uid=' + uid)
         });
     }
 
@@ -104,7 +105,10 @@ function Game() {
         });
     }
 
-    player_create();
+    uid = window.location.search.substr(window.location.search.indexOf('uid=') + 4, 32);
+    if (uid == "") {
+        player_create();
+    }
     keys_register();
     table_build();
 
