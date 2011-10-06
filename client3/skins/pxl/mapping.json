@@ -1,0 +1,20 @@
+{
+        ' ': undefined,
+        'S': undefined,
+        'B': ['block_1.png', 'block_2.png', 'block_3.png'],
+        '.': ['destructible_1.png', 'destructible_2.png', 'destructible_3.png'],
+        '|': ['flame_vt_1.png', 'flame_vt_2.png', 'flame_vt_2.png'],
+        '-': '|:90',
+        '^': ['flame_end_up_1.png', 'flame_end_up_2.png', 'flame_end_up_3.png'],
+        'v': '^:180',
+        '<': '^:270',
+        '>': '^:90',
+        '+': ['flame_cross_1.png', 'flame_cross_2.png', 'flame_cross_3.png']
+        'x': 'bomb.png',
+        'b': 'powerup_bomb.png',
+        'f': 'powerup_flame.png',
+        '1': 'p1.png',
+        '2': 'p2.png',
+        '3': 'p3.png',
+        '4': 'p4.png',
+}
