@@ -72,13 +72,9 @@ class BomberResource(resource.Resource, object):
     def __init__(self, state, data):
         super(BomberResource, self).__init__()
 
-        for req_key in 'game', 'admin_uid':
+        for req_key in 'game', 'admin_uid', 'players':
             if req_key not in state:
                 raise TypeError('Webserver state needs "%s" key' % req_key)
-
-        if 'players' not in state:
-            state['players'] = {}
-
         self.state = state
         self.data = data
 
@@ -279,7 +275,9 @@ if __name__ == '__main__':
         traceerr(game._bombs_process)
         reactor.callLater(BOMB_TICK_TIME, tick_bombs)
 
-    reactor.listenTCP(factory=server.Site(ServerRoot(dict(game=game, admin_uid=admin_uid), None)),
+    players = {}
+
+    reactor.listenTCP(factory=server.Site(ServerRoot(dict(game=game, admin_uid=admin_uid, players=players), None)),
                       interface=hostname,
                       port=port)
 
