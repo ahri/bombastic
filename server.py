@@ -210,15 +210,18 @@ class BomberPlayerValid(BomberResource):
         return info
 
     def render_PUT(self, request):
-        if 'action' in self.data:
-            try:
-                action = getattr(Player, self.data['action'])
-                self.state['game'].action_add(self.player, action)
-            except AttributeError:
-                pass
+        try:
+            action = getattr(Player, self.data['action'])
+            self.state['game'].action_add(self.player, action)
+        except KeyError:
+            pass
+        except AttributeError:
+            pass
 
-        if 'name' in self.data:
+        try:
             self.player.name = self.data['name']
+        except KeyError:
+            pass
 
         return self.render_GET(request)
 
