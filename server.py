@@ -8,10 +8,18 @@ from simplejson.decoder import JSONDecodeError
 import uuid
 from bomber import GameState, Player
 from pprint import pprint
+from functools import wraps
 
 FLAME_TICK_TIME  = 1
 ACTION_TICK_TIME = 0.25
 BOMB_TICK_TIME   = 1
+
+def json_req_handler(f):
+    @wraps(f)
+    def convert(self, request, *args, **kwargs):
+        #request.setHeader('Content-Type', 'text/json')
+        return json.dumps(f(self, request, *args, **kwargs))
+    return convert
 
 class ClientError(resource.Resource, object):
 
@@ -23,9 +31,10 @@ class ClientError(resource.Resource, object):
         super(ClientError, self).__init__()
         self.received = received
 
+    @json_req_handler
     def provide_message(self, request, message):
         request.setResponseCode(http.BAD_REQUEST)
-        return json.dumps(dict(message=message, received=self.received))
+        return dict(message=message, received=self.received)
 
 class Forbidden(ClientError):
 
@@ -110,8 +119,9 @@ class BomberAdmin(BomberResource):
     Handle /admin
     """
 
+    @json_req_handler
     def render_GET(self, request):
-        return json.dumps("Supply the admin UID")
+        return "Supply the admin UID"
 
     def getChild(self, uid, request):
         if uid != self.state['admin_uid']:
@@ -125,13 +135,14 @@ class BomberAdminValid(BomberResource):
     Handle (valid) /admin/uid
     """
 
+    @json_req_handler
     def render_GET(self, request):
         # list players
-        return json.dumps([dict(uid=uid,
-                                name=player.name,
-                                number=player.number,
-                                coords=player.coords) for
-                            uid, player in self.state['players'].items()])
+        return [dict(uid=uid,
+                     name=player.name,
+                     number=player.number,
+                     coords=player.coords) for
+                 uid, player in self.state['players'].items()]
 
     def render_PUT(self, request):
         if 'spawn' in self.data:
@@ -149,9 +160,9 @@ class BomberState(BomberResource):
     Handle /game
     """
 
+    @json_req_handler
     def render_GET(self, request):
-        #request.setHeader('Content-Type', 'text/json')
-        return json.dumps(str(self.state['game']))
+        return str(self.state['game'])
 
 class BomberPlayer(BomberResource):
 
@@ -189,13 +200,14 @@ class BomberPlayerValid(BomberResource):
         self.uid = uid
         self.player = self.state['players'][uid]
 
+    @json_req_handler
     def render_GET(self, request):
         info = dict(uid=self.uid, game=str(self.state['game']))
         for stat in 'coords', 'number', 'flame', 'bomb',\
                     'kills', 'deaths', 'suicides', 'name':
             info[stat] = getattr(self.player, stat)
 
-        return json.dumps(info)
+        return info
 
     def render_PUT(self, request):
         if 'action' in self.data:
