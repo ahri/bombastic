@@ -858,3 +858,23 @@ class TestGameState(TestCase):
         coords = p1.coords
         state._actions_process() # player moves?
         assert coords == p1.coords
+
+    def test_double_powerup_flame(self):
+        state = GameState()
+        state.arena_load(["arenas", "empty.bmm"])
+        p1 = Player()
+        p1.bomb = 2
+        p1.flame = 2
+        state.player_add(p1)
+        state.spawn()
+        coords = p1.coords
+        state.action_add(p1, Player.RIGHT)
+        state.action_add(p1, Player.BOMB)
+        state.action_add(p1, Player.RIGHT)
+        state.action_add(p1, Player.BOMB)
+        state.tick()
+        PowerupFlame(state, coords)
+        state.tick()
+        state.tick()
+        state.tick()
+        state.tick()
