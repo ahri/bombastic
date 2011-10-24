@@ -15,6 +15,18 @@ FLAME_TICK_TIME  = 1
 ACTION_TICK_TIME = 0.25
 BOMB_TICK_TIME   = 1
 
+GAME = GameState()
+PLAYERS = {}
+ADMIN_UID = uuid.uuid4().hex
+
+def player_status(uid, player):
+    """Consistent output per player"""
+    info = dict(uid=uid, game=str(GAME))
+    for stat in 'coords', 'number', 'flame', 'bomb',\
+                'kills', 'deaths', 'suicides', 'name':
+        info[stat] = getattr(player, stat)
+    return info
+
 def json_req_handler(f):
     @wraps(f)
     def convert(self, request, *args, **kwargs):
@@ -67,16 +79,11 @@ class ExpectedJson(ClientError):
 class BomberResource(resource.Resource, object):
 
     """
-    An HTTP resource that is game-state and player aware
+    An HTTP resource capable of easily sharing data
     """
 
-    def __init__(self, state, data):
+    def __init__(self, data):
         super(BomberResource, self).__init__()
-
-        for req_key in 'game', 'admin_uid', 'players':
-            if req_key not in state:
-                raise TypeError('Webserver state needs "%s" key' % req_key)
-        self.state = state
         self.data = data
 
 class ServerRoot(BomberResource):
@@ -99,11 +106,11 @@ class ServerRoot(BomberResource):
                 return ExpectedJson(data)
 
         if name == 'admin':
-            return BomberAdmin(self.state, data)
+            return BomberAdmin(data)
         if name == 'game':
-            return BomberState(self.state, data)
+            return BomberState(data)
         if name == 'player':
-            return BomberPlayer(self.state, data)
+            return BomberPlayer(data)
         if name == 'client2':
             return server.Site(static.File('client2'))
         if name == 'client3':
@@ -121,10 +128,10 @@ class BomberAdmin(BomberResource):
         return "Supply the admin UID"
 
     def getChild(self, uid, request):
-        if uid != self.state['admin_uid']:
+        if uid != ADMIN_UID:
             return Forbidden(self.data)
 
-        return BomberAdminValid(self.state, self.data)
+        return BomberAdminValid(self.data)
 
 class BomberAdminValid(BomberResource):
 
@@ -139,11 +146,11 @@ class BomberAdminValid(BomberResource):
                      name=player.name,
                      number=player.number,
                      coords=player.coords) for
-                 uid, player in self.state['players'].items()]
+                 uid, player in PLAYERS.items()]
 
     def render_PUT(self, request):
         if 'spawn' in self.data:
-            self.state['game'].spawn()
+            GAME.spawn()
 
         return self.render_GET(request)
 
@@ -159,7 +166,7 @@ class BomberState(BomberResource):
 
     @json_req_handler
     def render_GET(self, request):
-        return str(self.state['game'])
+        return str(GAME)
 
 class BomberPlayer(BomberResource):
 
@@ -170,21 +177,21 @@ class BomberPlayer(BomberResource):
     def render_POST(self, request):
         p = Player()
         uid = uuid.uuid4().hex
-        while uid in self.state['players']:
+        while uid in PLAYERS:
             uid = uuid.uuid4().hex
-        self.state['players'][uid] = p
-        self.state['game'].player_add(p)
+        PLAYERS[uid] = p
+        GAME.player_add(p)
 
         if self.data is not None and 'name' in self.data:
             p.name = self.data['name']
 
-        return BomberPlayerValid(self.state, self.data, uid).render_GET(request)
+        return BomberPlayerValid(self.data, uid).render_GET(request)
 
     def getChild(self, uid, request):
-        if uid not in self.state['players']:
+        if uid not in PLAYERS:
             return Invalid(self.data)
 
-        return BomberPlayerValid(self.state, self.data, uid)
+        return BomberPlayerValid(self.data, uid)
 
 class BomberPlayerValid(BomberResource):
 
@@ -192,24 +199,18 @@ class BomberPlayerValid(BomberResource):
     Handle /player/UID
     """
 
-    def __init__(self, state, data, uid):
-        super(BomberPlayerValid, self).__init__(state, data)
+    def __init__(self, data, uid):
+        super(BomberPlayerValid, self).__init__(data)
         self.uid = uid
-        self.player = self.state['players'][uid]
+        self.player = PLAYERS[uid]
 
     @json_req_handler
     def render_GET(self, request):
-        info = dict(uid=self.uid, game=str(self.state['game']))
-        for stat in 'coords', 'number', 'flame', 'bomb',\
-                    'kills', 'deaths', 'suicides', 'name':
-            info[stat] = getattr(self.player, stat)
-
-        return info
+        return player_status(self.uid, self.player)
 
     def render_PUT(self, request):
         try:
-            action = getattr(Player, self.data['action'])
-            self.state['game'].action_add(self.player, action)
+            GAME.action_add(self.player, getattr(Player, self.data['action']))
         except KeyError:
             pass
         except AttributeError:
@@ -223,9 +224,9 @@ class BomberPlayerValid(BomberResource):
         return self.render_GET(request)
 
     def render_DELETE(self, request):
-        del self.state['players'][self.uid]
+        del PLAYERS[self.uid]
         try:
-            self.state['game'].player_remove(self.player)
+            GAME.player_remove(self.player)
         except KeyError: # the game doesn't know about the player
             pass
         except AttributeError: # the player isn't in the game
@@ -241,13 +242,9 @@ if __name__ == '__main__':
     except ValueError:
         hostname, port = 'localhost', 21513
 
-    admin_uid = uuid.uuid4().hex
-
-    game = GameState()
-
     def traceerr(f, *args, **kwargs):
-        last_state = str(game)
-        last_arena = game.arena.data[:]
+        last_state = str(GAME)
+        last_arena = GAME.arena.data[:]
         try:
             f(*args, **kwargs)
         except Exception as e:
@@ -258,27 +255,26 @@ if __name__ == '__main__':
                 tracefile.write("last_arena =\n")
                 pprint(last_arena, tracefile)
                 tracefile.write("\n")
-                tracefile.write("state =\n%s\n" % str(game))
+                tracefile.write("state =\n%s\n" % str(GAME))
                 tracefile.write("arena =\n")
-                pprint(game.arena.data, tracefile)
+                pprint(GAME.arena.data, tracefile)
                 tracefile.write("\n\n\n")
             raise
 
     def tick_flames():
-        traceerr(game._flames_process)
+        traceerr(GAME._flames_process)
         reactor.callLater(FLAME_TICK_TIME, tick_flames)
 
     def tick_actions():
-        traceerr(game._actions_process)
+        traceerr(GAME._actions_process)
         reactor.callLater(ACTION_TICK_TIME, tick_actions)
 
     def tick_bombs():
-        traceerr(game._bombs_process)
+        traceerr(GAME._bombs_process)
         reactor.callLater(BOMB_TICK_TIME, tick_bombs)
 
-    players = {}
 
-    reactor.listenTCP(factory=server.Site(ServerRoot(dict(game=game, admin_uid=admin_uid, players=players), None)),
+    reactor.listenTCP(factory=server.Site(ServerRoot(None)),
                       interface=hostname,
                       port=port)
 
@@ -287,6 +283,6 @@ if __name__ == '__main__':
     reactor.callWhenRunning(tick_bombs)
 
     print "Listening on: http://%s:%d" % (hostname, port)
-    print "Admin uid:", admin_uid
+    print "Admin uid:", ADMIN_UID
 
     reactor.run()
