@@ -115,6 +115,8 @@ class ServerRoot(BomberResource):
             return server.Site(static.File('client2'))
         if name == 'client3':
             return server.Site(static.File('client3'))
+        if name == 'client4':
+            return server.Site(static.File('client4'))
         return self
 
 class BomberAdmin(BomberResource):
@@ -234,7 +236,7 @@ class BomberPlayerValid(BomberResource):
 
         return self.render_GET(request)
 
-class GameProtocol(WebSocketServerProtocol):
+class GameProtocol(WebSocketServerProtocol, object):
     def __init__(self, *args, **kwargs):
         super(GameProtocol, self).__init__(*args, **kwargs)
         self.uid = None
@@ -255,9 +257,9 @@ class GameProtocol(WebSocketServerProtocol):
 
     def onMessage(self, msg, binary):
         if self.player is None:
-            return self.player_set(uid)
+            return self.player_set(msg)
 
-        self.player_act(self, msg)
+        self.player_act(msg)
 
     def player_set(self, uid):
         try:
@@ -270,7 +272,8 @@ class GameProtocol(WebSocketServerProtocol):
         GAME.action_add(self.player, getattr(Player, action))
 
     def player_quit(self):
-        GAME.player_remove(self.player)
+        #GAME.player_remove(self.player)
+        pass
 
     def player_update(self):
         reactor.callLater(self.sample_rate, self.player_update)

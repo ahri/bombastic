@@ -1,5 +1,6 @@
 function Game() {
     var uid,
+        websocket,
         last_frame,
         img_refs = [],
         lookup_prefix = 'img/',
@@ -44,19 +45,19 @@ function Game() {
     var keys_register = function () {
         $(document).keydown(function(e) {
             if (e.keyCode == 32) {
-                $.update('/player/' + uid, JSON.stringify({'action': 'BOMB'}));
+                websocket.send('BOMB');
                 return false;
             } else if (e.keyCode == 37) {
-                $.update('/player/' + uid, JSON.stringify({'action': 'LEFT'}));
+                websocket.send('LEFT');
                 return false;
             } else if (e.keyCode == 38) {
-                $.update('/player/' + uid, JSON.stringify({'action': 'UP'}));
+                websocket.send('UP');
                 return false;
             } else if (e.keyCode == 39) {
-                $.update('/player/' + uid, JSON.stringify({'action': 'RIGHT'}));
+                websocket.send('RIGHT');
                 return false;
             } else if (e.keyCode == 40) {
-                $.update('/player/' + uid, JSON.stringify({'action': 'DOWN'}));
+                websocket.send('DOWN');
                 return false;
             }
         });
@@ -88,33 +89,38 @@ function Game() {
         });
     }
 
-    var table_update = function () {
-        $.read('/player/' + uid, function(resp) {
-            for (i = 0; i < resp.game.length; i++) {
-                var c  = resp.game.charAt(i);
-                if (c == "\n") {
-                    continue;
-                }
-                var cl = last_frame.charAt(i);
-
-                if (c != cl) {
-                    img_refs[i].setAttribute('src', lookup_prefix + get_img_for(c));
-                }
+    var table_update = function (resp) {
+        for (i = 0; i < resp.game.length; i++) {
+            var c  = resp.game.charAt(i);
+            if (c == "\n") {
+                continue;
             }
-            last_frame = resp.game;
-        });
+            var cl = last_frame.charAt(i);
+
+            if (c != cl) {
+                img_refs[i].setAttribute('src', lookup_prefix + get_img_for(c));
+            }
+        }
+        last_frame = resp.game;
     }
 
     uid = window.location.search.substr(window.location.search.indexOf('uid=') + 4, 32);
     if (uid == "") {
         player_create();
     }
+
+    var ws_uri = "ws://" + window.location.hostname + ":9000";
+    if (MozWebSocket != undefined) {
+       WebSocket = MozWebSocket;
+    }
+    websocket = new WebSocket(ws_uri);
+    websocket.onmessage = function(e) {
+        table_update(JSON.parse(e.data));
+    }
+    websocket.send(uid);
+
     keys_register();
     table_build();
-
-    setInterval(function() {
-        table_update();
-    }, 100);
 }
 
 $(function() {
