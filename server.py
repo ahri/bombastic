@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from bomber import GameState, Player
 from twisted.internet import reactor
 from twisted.web import server, resource, http, util, static
 from autobahn.websocket import WebSocketServerFactory, WebSocketServerProtocol
-import simplejson as json
 from simplejson.decoder import JSONDecodeError
-import uuid
-from bomber import GameState, Player
 from pprint import pprint
 from functools import wraps
+import simplejson as json
+import uuid
 
 FLAME_TICK_TIME  = 1
 ACTION_TICK_TIME = 0.25
