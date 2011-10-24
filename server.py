@@ -3,6 +3,7 @@
 
 from twisted.internet import reactor
 from twisted.web import server, resource, http, util, static
+from autobahn.websocket import WebSocketServerFactory, WebSocketServerProtocol
 import simplejson as json
 from simplejson.decoder import JSONDecodeError
 import uuid
