@@ -234,6 +234,52 @@ class BomberPlayerValid(BomberResource):
 
         return self.render_GET(request)
 
+class GameProtocol(WebSocketServerProtocol):
+    def __init__(self, *args, **kwargs):
+        super(GameProtocol, self).__init__(*args, **kwargs)
+        self.uid = None
+        self.player = None
+        self.sample_rate = min([FLAME_TICK_TIME, ACTION_TICK_TIME, BOMB_TICK_TIME]) / 2
+
+    def onOpen(self):
+        self.player_update()
+
+    def status_update(self):
+        self.sendMessage("TODO: data here!")
+
+    def onClose(self, code, reason):
+        self.player_quit()
+
+    def sendMessage(self, message):
+        return super(GameProtocol, self).sendMessage(json.dumps(message))
+
+    def onMessage(self, msg, binary):
+        if self.player is None:
+            return self.player_set(uid)
+
+        self.player_act(self, msg)
+
+    def player_set(self, uid):
+        try:
+            self.player = PLAYERS[uid]
+            self._uid = uid
+        except KeyError:
+            self.sendMessage("Invalid player UID")
+
+    def player_act(self, action):
+        GAME.action_add(self.player, getattr(Player, action))
+
+    def player_quit(self):
+        GAME.player_remove(self.player)
+
+    def player_update(self):
+        reactor.callLater(self.sample_rate, self.player_update)
+
+        if self.player is None:
+            return
+
+        self.sendMessage(player_status(self._uid, self.player))
+
 if __name__ == '__main__':
     listen = raw_input('hostname:port to listen on? defaults to localhost:21513 : ')
     try:
@@ -273,6 +319,9 @@ if __name__ == '__main__':
         traceerr(GAME._bombs_process)
         reactor.callLater(BOMB_TICK_TIME, tick_bombs)
 
+    factory = WebSocketServerFactory()
+    factory.protocol = GameProtocol
+    reactor.listenTCP(9000, factory)
 
     reactor.listenTCP(factory=server.Site(ServerRoot(None)),
                       interface=hostname,
