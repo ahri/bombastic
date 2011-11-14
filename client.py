@@ -8,7 +8,7 @@ BASE = 'http://localhost:21513'
 def game_command(base=BASE):
     """Print the current game-state of the server"""
     rc = RestClientJson(base)
-    print rc.get('game')
+    print rc.read('game')
 
 class ExitCmd(cmd.Cmd, object):
     def can_exit(self):
@@ -47,7 +47,7 @@ class StateCmd(cmd.Cmd, object):
         self.rc = rc
 
     def do_game(self, s):
-        print self.rc.get('game')
+        print self.rc.read('game')
 
     def help_game(self):
         print "Display game state"
@@ -58,20 +58,20 @@ class AdminCmd(ExitCmd, StateCmd, DebugCmd):
         self.uid = uid
 
     def do_status(self, s):
-        print self.rc.get('admin', self.uid)
+        print self.rc.read('admin', self.uid)
 
     def help_status(self):
         print "Display game status"
 
     def do_spawn(self, s):
-        print self.rc.put('admin', self.uid, dict(spawn=True))
+        print self.rc.update('admin', self.uid, dict(spawn=True))
 
     def help_spawn(self):
         print "Spawn players"
 
     def do_kick(self, s):
         try:
-            print self.rc.delete('player', s)
+            print self.rc.destroy('player', s)
         except StatusClientError:
             pass
 
@@ -89,26 +89,26 @@ class PlayerCmd(ExitCmd, StateCmd, DebugCmd):
         else:
             data = None
 
-        res = self.rc.post('player', data)
+        res = self.rc.create('player', data)
         self.uid = res.get('uid')
 
     def help_create(self):
         print "Create a player, optionally pass a name"
 
     def do_detail(self, s):
-        print self.rc.get('player', self.uid)
+        print self.rc.read('player', self.uid)
 
     def help_detail(self):
         print "Display player details"
 
     def do_name(self, s):
-        self.rc.put('player', self.uid, dict(name=s))
+        self.rc.update('player', self.uid, dict(name=s))
 
     def help_name(self):
         print "Set player name"
 
     def do_action(self, s):
-        self.rc.put('player', self.uid, dict(action=s))
+        self.rc.update('player', self.uid, dict(action=s))
 
     def help_action(self):
         print "Execute an action"
@@ -116,7 +116,7 @@ class PlayerCmd(ExitCmd, StateCmd, DebugCmd):
     def do_exit(self, s):
         if self.uid is not None:
             try:
-                self.rc.delete('player', self.uid)
+                self.rc.destroy('player', self.uid)
             except StatusClientError:
                 pass
         return super(PlayerCmd, self).do_exit(s)
@@ -127,7 +127,7 @@ def admin_command(base=BASE):
     uid = raw_input("UID: ")
     rc = RestClientJson(base)
     try:
-        rc.get('admin', uid)
+        rc.read('admin', uid)
     except StatusClientError:
         print "Invalid UID specified"
         return

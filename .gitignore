@@ -1,3 +1,9 @@
 .*.swp
 *.pyc
 trace.err
+bin/
+include/
+lib/
+lib64
+share/
+*.err

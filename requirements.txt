@@ -1,0 +1,11 @@
+Pygments==1.4
+Twisted==11.0.0
+autobahn==0.4.3
+bpython==0.10.1
+lxml==2.3.2
+pycurl==7.19.0
+pycurlbrowser==0.1
+scriptine==0.2.0a4
+simplejson==2.2.1
+wsgiref==0.1.2
+zope.interface==3.8.0
