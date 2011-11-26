@@ -111,12 +111,8 @@ class ServerRoot(BomberResource):
             return BomberState(data)
         if name == 'player':
             return BomberPlayer(data)
-        if name == 'client2':
-            return server.Site(static.File('client2'))
-        if name == 'client3':
-            return server.Site(static.File('client3'))
-        if name == 'client4':
-            return server.Site(static.File('client4'))
+        if name == 'client':
+            return server.Site(static.File('client_web'))
         return self
 
 class BomberAdmin(BomberResource):

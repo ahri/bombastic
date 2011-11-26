@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 import cmd
+import sys
 from pycurlbrowser.rest_client import RestClientJson, StatusClientError
 
 BASE = 'http://localhost:21513'
-
-def game_command(base=BASE):
-    """Print the current game-state of the server"""
-    rc = RestClientJson(base)
-    print rc.read('game')
 
 class ExitCmd(cmd.Cmd, object):
     def can_exit(self):
@@ -78,67 +74,14 @@ class AdminCmd(ExitCmd, StateCmd, DebugCmd):
     def help_kick(self):
         print "Kick a player"
 
-class PlayerCmd(ExitCmd, StateCmd, DebugCmd):
-    def __init__(self, rc):
-        super(PlayerCmd, self).__init__(rc)
-        self.uid = None
-
-    def do_create(self, s):
-        if len(s) > 0:
-            data = dict(name=s)
-        else:
-            data = None
-
-        res = self.rc.create('player', data)
-        self.uid = res.get('uid')
-
-    def help_create(self):
-        print "Create a player, optionally pass a name"
-
-    def do_detail(self, s):
-        print self.rc.read('player', self.uid)
-
-    def help_detail(self):
-        print "Display player details"
-
-    def do_name(self, s):
-        self.rc.update('player', self.uid, dict(name=s))
-
-    def help_name(self):
-        print "Set player name"
-
-    def do_action(self, s):
-        self.rc.update('player', self.uid, dict(action=s))
-
-    def help_action(self):
-        print "Execute an action"
-
-    def do_exit(self, s):
-        if self.uid is not None:
-            try:
-                self.rc.destroy('player', self.uid)
-            except StatusClientError:
-                pass
-        return super(PlayerCmd, self).do_exit(s)
-
-    do_EOF = do_exit
-
-def admin_command(base=BASE):
+if __name__ == '__main__':
     uid = raw_input("UID: ")
-    rc = RestClientJson(base)
+    rc = RestClientJson(BASE)
     try:
         rc.read('admin', uid)
     except StatusClientError:
         print "Invalid UID specified"
-        return
+        sys.exit(1)
 
     interpreter = AdminCmd(rc, uid)
     interpreter.cmdloop()
-
-def player_command(base=BASE):
-    interpreter = PlayerCmd(RestClientJson(base))
-    interpreter.cmdloop()
-
-if __name__ == '__main__':
-    import scriptine
-    scriptine.run()

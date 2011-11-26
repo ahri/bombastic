@@ -7,3 +7,4 @@ lib/
 lib64
 share/
 *.err
+man/
