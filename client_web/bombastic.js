@@ -117,10 +117,13 @@ function Game() {
     websocket.onmessage = function(e) {
         table_update(JSON.parse(e.data));
     }
-    websocket.send(uid);
+    // grr I didn't need this before; why do I need to set a timeout now?!
+    setTimeout(function () {
+        websocket.send(uid);
 
-    keys_register();
-    table_build();
+        keys_register();
+        table_build();
+    }, 1000);
 }
 
 $(function() {

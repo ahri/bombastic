@@ -112,7 +112,7 @@ class ServerRoot(BomberResource):
         if name == 'player':
             return BomberPlayer(data)
         if name == 'client':
-            return server.Site(static.File('client_web'))
+            return static.File('client_web')
         return self
 
 class BomberAdmin(BomberResource):
@@ -245,7 +245,7 @@ class GameProtocol(WebSocketServerProtocol, object):
     def status_update(self):
         self.sendMessage("TODO: data here!")
 
-    def onClose(self, code, reason):
+    def onClose(self, wasClean, code, reason):
         self.player_quit()
 
     def sendMessage(self, message):
@@ -319,8 +319,11 @@ if __name__ == '__main__':
         reactor.callLater(BOMB_TICK_TIME, tick_bombs)
 
     factory = WebSocketServerFactory()
+    # TODO: choose a more sensible port
+    # TODO: add a REST interface to get the port
+    factory.port = 9000 # ugh, why do I have to do this twice?
     factory.protocol = GameProtocol
-    reactor.listenTCP(9000, factory)
+    reactor.listenTCP(interface=hostname, port=9000, factory=factory)
 
     reactor.listenTCP(factory=server.Site(ServerRoot(None)),
                       interface=hostname,
