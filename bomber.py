@@ -125,10 +125,9 @@ class Player(GameObject):
     RIGHT = 4
     BOMB  = 5
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """Set up some defaults"""
-        self.state = None
-        self.coords = None
+        super(Player, self).__init__(state=None, coords=None)
 
         self._bombs_live = []
 
@@ -319,7 +318,7 @@ class Flame(GameObject):
         self.combine(flame.__class__)(self.bomb, self.coords)
 
     @classmethod
-    def combine(cls, flamecls):
+    def combine(cls, _):
         return Flame
 
     def picked_up(self, player):
@@ -337,7 +336,7 @@ class FlameCross(Flame):
     DEBUG_CHR = "+"
 
     @classmethod
-    def combine(cls, flamecls):
+    def combine(cls, _):
         return FlameCross
 
 class FlameHz(Flame):
@@ -423,7 +422,9 @@ class GameState(object):
     """Represents the game state"""
 
     def __init__(self):
-        "Simple init of variables"
+        """Simple init of variables"""
+        self.arena = None
+
         self._player_queue = udeque()
         self._sticky_actions = {}
         self._action_queue = deque()
@@ -459,7 +460,7 @@ class GameState(object):
         """Produce a string representation of the arena in the same format as the map files"""
         chars = []
         old_y = 0
-        for x, y, l in self.arena:
+        for _, y, l in self.arena:
             if y != old_y:
                 chars.append('\n')
                 old_y = y
@@ -485,7 +486,7 @@ class GameState(object):
     def spawn(self):
         """Spawn the players into the arena"""
         p_no = 0
-        for x, y, l in self.arena:
+        for x, y, _ in self.arena:
             if self.arena.coords_have_class((x, y), SpawnPoint):
                 try:
                     player = self._player_queue.pop()
