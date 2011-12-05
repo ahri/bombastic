@@ -29,13 +29,15 @@ class GameProtocol(WebSocketClientProtocol):
     """
     """
 
+    def __init__(self, callback):
+        self.callback = callback
+
     def onOpen(self):
         print "sending UID:", self.uid
         self.sendMessage(self.uid)
 
     def onMessage(self, message, binary):
-        print message
-        # TODO: update game state
+        self.callback(message)
 
 class BombasticClientFactory(WebSocketClientFactory, object):
 
